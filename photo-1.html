@@ -74,7 +74,7 @@
         </div>
         
         <footer class="mt-24 text-center border-t border-slate-200 pt-10 pb-10">
-            <p class="text-slate-400 text-sm font-bold tracking-widest uppercase">Memory Archive System v2.1</p>
+            <p class="text-slate-400 text-sm font-bold tracking-widest uppercase">Memory Archive System v2.3</p>
         </footer>
     </div>
 
@@ -88,6 +88,7 @@
             <div id="lightbox-caption" class="mt-4 text-center">
                 <h2 id="caption-title" class="text-white text-2xl font-bold"></h2>
                 <p id="caption-desc" class="text-slate-400 font-medium"></p>
+                <p id="caption-id" class="mt-2 inline-block px-3 py-1 bg-blue-600 rounded text-xs text-white font-black"></p>
             </div>
         </div>
     </div>
@@ -106,7 +107,7 @@
 11	2024	歐洲	立陶宛	https://drive.google.com/file/d/1qUYh981QR6y3MO7Z_-K11t2sR8o6c79O/view
 12	2024	歐洲	立陶宛	https://drive.google.com/file/d/1oym3_usBIXqcd0OaNtdvE4qgI-iN0Ib7/view
 13	2024	歐洲	立陶宛	https://drive.google.com/file/d/1-XZ24WKJJHzIkT5kvPXMo9Du2AJGYhGf/view
-14	2024	歐洲	立陶宛	https://drive.google.com/file/d/1lF0Xxwv9-g0Rgux0zXLkkyzfujtCIhE/view
+14	2024	歐洲	立陶宛	https://drive.google.com/file/d/1lF0Xxwv9-_g0Rgux0zXLkkyzfujtCIhE/view
 15	2024	歐洲	立陶宛	https://drive.google.com/file/d/17bB32jcCdPUTD6KPMXTuCuGpNfRZ53Y1/view
 16	2024	歐洲	立陶宛	https://drive.google.com/file/d/1XSMshkuuJNYytpuyhFu3x-Em-94Xynka/view
 17	2024	歐洲	立陶宛	https://drive.google.com/file/d/17y8d6tw3oKlsNaJNfexs1qBsBqTAtchM/view
@@ -154,10 +155,16 @@
 59	2024	歐洲	芬蘭	https://drive.google.com/file/d/1gtKhd_xEuTDOoQ_IEO8zNISUGQX8T52r/view
 60	2024	歐洲	芬蘭	https://drive.google.com/file/d/1GZRwu5YvU_mlPp2uDy0nQLvBE36R1aS-/view`;
 
+        // 修復後的 ID 提取函數，支持包含橫槓、底線的 ID
         function getThumbnail(url) {
-            const idMatch = url.match(/\/d\/(.+?)\//);
-            const id = idMatch ? idMatch[1] : '';
-            return id ? `https://lh3.googleusercontent.com/d/${id}` : '';
+            try {
+                // 嘗試匹配 /d/ 後面到下一個斜槓前的所有字符（包含減號、底線等）
+                const match = url.match(/\/d\/([^\/]+)/);
+                const id = match ? match[1] : '';
+                return id ? `https://lh3.googleusercontent.com/d/${id}` : '';
+            } catch (e) {
+                return '';
+            }
         }
 
         const galleryData = rawData.trim().split('\n').map(line => {
@@ -173,10 +180,10 @@
             };
         });
 
-        // 分頁狀態管理
+        // 分頁狀態
         let currentFilter = 'all';
         let currentPage = 1;
-        const itemsPerPage = 12; // 每頁顯示 12 張
+        const itemsPerPage = 12;
 
         const gallery = document.getElementById('gallery');
         const filterContainer = document.getElementById('filter-container');
@@ -223,28 +230,21 @@
             });
         }
 
-        // 核心更新邏輯：處理篩選與分頁
         function updateGallery() {
-            // 1. 篩選資料
             const filteredData = currentFilter === 'all' 
                 ? galleryData 
                 : galleryData.filter(d => d.country === currentFilter);
 
-            // 2. 計算分頁
             const totalItems = filteredData.length;
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             
-            // 安全檢查防止頁碼超出範圍
             if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
 
             const startIndex = (currentPage - 1) * itemsPerPage;
             const paginatedItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-            // 3. 渲染照片卡片
             renderCards(paginatedItems);
-
-            // 4. 渲染分頁按鈕
             renderPagination(totalPages);
         }
 
@@ -255,16 +255,24 @@
             }
             gallery.innerHTML = data.map(item => `
                 <div class="travel-card bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm cursor-pointer group" 
-                     onclick="openLightbox('${item.thumb}', '${item.country}', '${item.year} · ${item.region}')">
+                     onclick="openLightbox('${item.thumb}', '${item.country}', '${item.year} · ${item.region}', '${item.id}')">
                     <div class="img-container relative aspect-[4/3] overflow-hidden bg-slate-200">
-                        <img src="${item.thumb}" alt="${item.country}" class="w-full h-full object-cover" loading="lazy">
+                        <img src="${item.thumb}" alt="${item.country}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='https://placehold.co/600x450?text=Image+Not+Found'">
+                        
+                        <!-- 序號與年份標籤 -->
+                        <div class="absolute top-4 left-4 flex flex-col gap-2">
+                            <div class="bg-blue-600 px-3 py-1 rounded-lg text-[11px] font-black text-white shadow-lg">
+                                # ${item.id}
+                            </div>
+                            <div class="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-[10px] font-black text-slate-800 shadow-sm">
+                                ${item.year}
+                            </div>
+                        </div>
+
                         <div class="absolute inset-0 bg-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <div class="bg-white/90 backdrop-blur p-3 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
                                 <i class="fa-solid fa-magnifying-glass-plus text-blue-600"></i>
                             </div>
-                        </div>
-                        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black text-slate-800 shadow-sm">
-                            ${item.year}
                         </div>
                     </div>
                     <div class="p-6">
@@ -308,15 +316,13 @@
 
         function changeFilter(country, btnElement) {
             currentFilter = country;
-            currentPage = 1; // 重置為第一頁
-            
+            currentPage = 1;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
             if (btnElement) {
                 btnElement.classList.add('active-filter');
             } else {
                 document.querySelector('button[onclick*="changeFilter(\'all\'"]').classList.add('active-filter');
             }
-            
             updateGallery();
             window.scrollTo({ top: 400, behavior: 'smooth' });
         }
@@ -327,10 +333,11 @@
             window.scrollTo({ top: 400, behavior: 'smooth' });
         }
 
-        function openLightbox(imgSrc, title, desc) {
+        function openLightbox(imgSrc, title, desc, id) {
             lightboxImg.src = imgSrc;
             document.getElementById('caption-title').textContent = title;
             document.getElementById('caption-desc').textContent = desc;
+            document.getElementById('caption-id').textContent = `照片編號: # ${id}`;
             lightbox.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
