@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅途足跡相簿</title>
+    <!-- 引入 Tailwind CSS 用於快速佈局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .photo-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .photo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .img-container {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 3 / 2;
+            background-color: #e2e8f0;
+        }
+
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .photo-card:hover .img-container img {
+            transform: scale(1.1);
+        }
+
+        /* 燈箱背景 */
+        #lightbox {
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+
+        /* 標題圖案尺寸調整 */
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        @media (min-width: 768px) {
+            .header-icon {
+                width: 56px;
+                height: 56px;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- 頁首 -->
+        <header class="text-center mb-12">
+            <div class="flex items-center justify-center gap-4 mb-2">
+                <!-- 左側小圖案 -->
+                <img src="https://lh3.googleusercontent.com/d/1IUW5Uq5M8pgTfMX6zE58J7gUcs1Wo6fo" 
+                     alt="Left Icon" 
+                     class="header-icon"
+                     onerror="this.src='https://via.placeholder.com/60/3b82f6/ffffff?text=L'">
+                
+                <h1 class="text-3xl md:text-4xl font-bold text-slate-900">旅途足跡相簿</h1>
+                
+                <!-- 右側小圖案 -->
+                <img src="https://lh3.googleusercontent.com/d/1Cjh7TqL1QPqufsldJgmA_w8J00eks2kP" 
+                     alt="Right Icon" 
+                     class="header-icon"
+                     onerror="this.src='https://via.placeholder.com/60/3b82f6/ffffff?text=R'">
+            </div>
+            <p class="text-slate-500">探索每一段精彩的記憶</p>
+            <div id="stats" class="mt-4 text-sm font-medium text-blue-600 bg-blue-50 inline-block px-4 py-1 rounded-full">
+                正在初始化...
+            </div>
+        </header>
+
+        <!-- 篩選控制項 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 ml-1 uppercase">年份</label>
+                    <select id="filterYear" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                        <option value="">所有年份</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 ml-1 uppercase">區域</label>
+                    <select id="filterCat1" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                        <option value="">所有區域</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 ml-1 uppercase">地點</label>
+                    <select id="filterCat2" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                        <option value="">所有地點</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 照片牆 -->
+        <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- JS 動態渲染 -->
+        </div>
+
+        <!-- 分頁 -->
+        <div id="pagination" class="flex justify-center items-center gap-2 mt-12 mb-20"></div>
+    </div>
+
+    <!-- 燈箱 -->
+    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-50 flex items-center justify-center p-4 cursor-pointer" onclick="closeLightbox()">
+        <img id="lightboxImg" src="" class="max-w-full max-h-full rounded-lg shadow-2xl" onclick="event.stopPropagation()">
+    </div>
+
+    <script>
+        // 資料源
+        const rawData = `1 2025 中國 上海 https://drive.google.com/file/d/1m_UFVphK9yd-FiRcfWvChMOm0G8tMnOK/view
+2 2025 中國 上海 https://drive.google.com/file/d/1mOvsoJjDDRhVSEfAoHo3EX8viqonhIUn/view
+3 2024 歐洲 立陶宛 https://drive.google.com/file/d/1_x03q-TwGOZPaEqmhMkzj_g-4k_IpbSE/view
+4 2024 歐洲 立陶宛 https://drive.google.com/file/d/1DijhduWQbvmWLLKmv2IHImA2eY_exJWf/view
+5 2024 歐洲 立陶宛 https://drive.google.com/file/d/1paUx-r7HmALYcZ5wXzvRi7gpV5XtWPX7/view
+6 2024 歐洲 立陶宛 https://drive.google.com/file/d/1G1zdfzpV0gve1YdDc5p3uqqH0QjqVOLE/view
+7 2024 歐洲 立陶宛 https://drive.google.com/file/d/1MH0khvhZ0ckrpA2hhUB7LDbiU7FzNIPH/view
+8 2024 歐洲 立陶宛 https://drive.google.com/file/d/1UfyMM4cn9GnmcsXUleI9h5FJxk1jU-JY/view
+9 2024 歐洲 立陶宛 https://drive.google.com/file/d/1cFXOQ-B4v1pNOuLK7R4HsCpvm21ib3iV/view
+10 2024 歐洲 立陶宛 https://drive.google.com/file/d/1TKuvs88klFpqFUidhUIUT1Q6oyUcED-G/view
+11 2024 歐洲 立陶宛 https://drive.google.com/file/d/1qUYh981QR6y3MO7Z_-K11t2sR8o6c79O/view
+12 2024 歐洲 立陶宛 https://drive.google.com/file/d/1oym3_usBIXqcd0OaNtdvE4qgI-iN0Ib7/view
+13 2024 歐洲 立陶宛 https://drive.google.com/file/d/1-XZ24WKJJHzIkT5kvPXMo9Du2AJGYhGf/view
+14 2024 歐洲 立陶宛 https://drive.google.com/file/d/1lF0Xxwv9-_g0Rgux0zXLkkyzfujtCIhE/view
+15 2024 歐洲 立陶宛 https://drive.google.com/file/d/17bB32jcCdPUTD6KPMXTuCuGpNfRZ53Y1/view
+16 2024 歐洲 立陶宛 https://drive.google.com/file/d/1XSMshkuuJNYytpuyhFu3x-Em-94Xynka/view
+17 2024 歐洲 立陶宛 https://drive.google.com/file/d/17y8d6tw3oKlsNaJNfexs1qBsBqTAtchM/view
+18 2024 歐洲 立陶宛 https://drive.google.com/file/d/17d6af-NcuEAGq8jBzfNeQxuVHhQdyzvu/view
+19 2024 歐洲 立陶宛 https://drive.google.com/file/d/1hkYKzsTW54xe3bGwOnGST-6Yh3x5xKlK/view
+20 2024 歐洲 立陶宛 https://drive.google.com/file/d/1DfkFxPbd8WYDCT8FFTTozHeMPDfL_URj/view
+21 2024 歐洲 立陶宛 https://drive.google.com/file/d/1Zm42Ub7LUKJ_85MYsh7Nr5llQES9NacX/view
+22 2024 歐洲 立陶宛 https://drive.google.com/file/d/1z41en8kvp_-l0F09--7nglhmmy4H9135/view
+23 2024 歐洲 立陶宛 https://drive.google.com/file/d/145tzCzMkTmqDULKzxSQtgHObsXLDgqAq/view
+24 2024 歐洲 立陶宛 https://drive.google.com/file/d/1VKzmAQotLoo-xWs2A8ZJ0RwpmW9Gqif-/view
+25 2024 歐洲 立陶宛 https://drive.google.com/file/d/1n5GzWO6F9zS4pSHPUQRkC52uCf8N3lJn/view
+26 2024 歐洲 立陶宛 https://drive.google.com/file/d/1K4_aNM8YJ5ahZKzsTjP5xkDj6QRRHkyT/view
+27 2024 歐洲 立陶宛 https://drive.google.com/file/d/120HtdOslUXIGPl_L3UfekvVJZCjqHeTq/view
+28 2024 歐洲 立陶宛 https://drive.google.com/file/d/1QHAntoq7oan54qei33b8KgT4OJxkKV-M/view
+29 2024 歐洲 立陶宛 https://drive.google.com/file/d/1YgVe8puy_PVY68fbQB5gB-kxixa4jEmy/view
+30 2024 歐洲 拉脫維亞 https://drive.google.com/file/d/13JLuowd-EUU4ouPM18NINO756Ra9Sfn1/view
+31 2024 歐洲 拉脫維亞 https://drive.google.com/file/d/1VAcFPU1IPzL-z4G1mNFqt1U4LhQTFwp8/view
+32 2024 歐洲 拉脫維亞 https://drive.google.com/file/d/1CE74MNZam8zHygiYeDKniDfoOrPOcGD2/view
+33 2024 歐洲 拉脫維亞 https://drive.google.com/file/d/1kQp6gOD7zz2a_PxoJMTu3H4QT3_yt558/view
+34 2024 歐洲 拉脫維亞 https://drive.google.com/file/d/1BUkrTS3zq-nQG_QnPWL_EOFq-nI_81mh/view
+35 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1elugRlUmf9xlUv91zFeeW0FpIt2wtc3p/view
+36 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1hoqosbT0-tv5hVB8cvaJnN5itaSQk3Tz/view
+37 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1rJOASl9d3TQ3QbWYx2fdUtBdZA3VRcwb/view
+38 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/181l5rx5IeZMBXRVbb5S4QClSADmUmH-p/view
+39 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1WBmLCfvUvXEUPy5mhxCjl21fuU2-v2Q-/view
+40 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1AZsu4u2mZSPQy-Zx5SEzE0la0kAedgj-/view
+41 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1QpUFOMByKo5krFP4siz_jAilGPcvfIof/view
+42 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1-w4oIxE6-XHHYpEP_zG6hlXLtQxoS5lL/view
+43 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1Tnz22Sm8mTQ3dPvL0qMxLZcaOIrFPdAO/view
+44 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1kC8FruubUkZ0kLSE35vnB_bhPJNMDqda/view
+45 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1gkK_xvdkrnu6-Ddo3iYJzIsc7R-gpiUm/view
+46 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1h9yJQaXBuYMb9sGHzFnqniJtOf_d08qX/view
+47 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1kLy6dMAnzROC-CRYyICHT3E5_TgoSFbd/view
+48 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/11QTbWN15MDZJVUd9EfoYY-8Dtn8CeWb1/view
+49 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/1B0qudzYIi16N8FC_qv4HbQPVV5tlRzzz/view
+50 2024 歐洲 愛沙尼亞 https://drive.google.com/file/d/17tg0amjXD_hOiQNL93zJXWZoXsWt_biA/view
+51 2024 歐洲 芬蘭 https://drive.google.com/file/d/1r0nb6h4_zFwCCEZzASDzcfuA4aXWzM-Q/view
+52 2024 歐洲 芬蘭 https://drive.google.com/file/d/1NaBxHzCp_us-5-bZI9YqGlV5Pos7q-LA/view
+53 2024 歐洲 芬蘭 https://drive.google.com/file/d/1I-GfOW00bmk8pCuf7XhdAbpfbVOcmyeB/view
+54 2024 歐洲 芬蘭 https://drive.google.com/file/d/1pgitjKHbpINGuss22qy7GsuOJm3zrZVX/view
+55 2024 歐洲 芬蘭 https://drive.google.com/file/d/1B16z4amzYbloafeGKAXfSXj7kzFJx4JE/view
+56 2024 歐洲 芬蘭 https://drive.google.com/file/d/1l6nKzXZesBdVNYRAzLGOH9bRKHofKVO_/view
+57 2024 歐洲 芬蘭 https://drive.google.com/file/d/1Tr6v-QRn_GlwpejAjbN4POP7gte0RB4e/view
+58 2024 歐洲 芬蘭 https://drive.google.com/file/d/1bV9T9xTtAqVq-IrTty6u0kShi5V_Xp1o/view
+59 2024 歐洲 芬蘭 https://drive.google.com/file/d/1gtKhd_xEuTDOoQ_IEO8zNISUGQX8T52r/view
+60 2024 歐洲 芬蘭 https://drive.google.com/file/d/1GZRwu5YvU_mlPp2uDy0nQLvBE36R1aS-/view
+61 2024 歐洲 芬蘭 https://drive.google.com/file/d/1OuvDKVx3IAREOIf0821KL5UOXeMGqpwr/view
+62 2024 歐洲 芬蘭 https://drive.google.com/file/d/1RSSr_q4KGOyXRO2qnDoCRTVgMChvdqeK/view
+63 2024 歐洲 芬蘭 https://drive.google.com/file/d/1vdpR5bOK3OAkIm876tTa3lnyWsBzXtW9/view
+64 2024 歐洲 芬蘭 https://drive.google.com/file/d/1LjpLtgWhCcK4v_y_yUJA6MTCamhc1H2v/view
+65 2024 歐洲 芬蘭 https://drive.google.com/file/d/1sSd-6l0Wo054V-o8RoQ75rEze54O6PjM/view
+66 2024 歐洲 芬蘭 https://drive.google.com/file/d/1LWr7cTWKjwifIkdIOSaE4CEwCexB2p77/view`;
+
+        const allPhotos = rawData.trim().split('\n').map(line => {
+            const parts = line.split(' ');
+            const fileId = parts[4].split('/d/')[1]?.split('/')[0];
+            const directUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
+            
+            return {
+                id: parts[0],
+                year: parts[1],
+                cat1: parts[2],
+                cat2: parts[3],
+                url: directUrl
+            };
+        });
+
+        let currentFilter = { year: '', cat1: '', cat2: '' };
+        let currentPage = 1;
+        const itemsPerPage = 9;
+
+        function init() {
+            const years = [...new Set(allPhotos.map(p => p.year))].sort().reverse();
+            const cat1s = [...new Set(allPhotos.map(p => p.cat1))].sort();
+            const cat2s = [...new Set(allPhotos.map(p => p.cat2))].sort();
+
+            const populate = (id, opts) => {
+                const s = document.getElementById(id);
+                opts.forEach(o => s.innerHTML += `<option value="${o}">${o}</option>`);
+            };
+
+            populate('filterYear', years);
+            populate('filterCat1', cat1s);
+            populate('filterCat2', cat2s);
+
+            ['filterYear', 'filterCat1', 'filterCat2'].forEach(id => {
+                document.getElementById(id).addEventListener('change', e => {
+                    currentFilter[id.replace('filter', '').toLowerCase()] = e.target.value;
+                    currentPage = 1;
+                    render();
+                });
+            });
+
+            render();
+        }
+
+        function render() {
+            const filtered = allPhotos.filter(p => 
+                (!currentFilter.year || p.year === currentFilter.year) &&
+                (!currentFilter.cat1 || p.cat1 === currentFilter.cat1) &&
+                (!currentFilter.cat2 || p.cat2 === currentFilter.cat2)
+            );
+
+            document.getElementById('stats').textContent = `找到 ${filtered.length} 張照片`;
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const pageItems = filtered.slice(start, start + itemsPerPage);
+
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = pageItems.map(p => `
+                <div class="photo-card bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden cursor-pointer" onclick="openLightbox('${p.url}')">
+                    <div class="img-container">
+                        <img src="${p.url}" 
+                             alt="${p.cat2}" 
+                             loading="lazy" 
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/600x400/e2e8f0/64748b?text=無法讀取 (請檢查Drive權限)';">
+                    </div>
+                    <div class="p-5">
+                        <div class="flex gap-2 mb-2">
+                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">${p.year}</span>
+                            <span class="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded">${p.cat1}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800">${p.cat2}</h3>
+                    </div>
+                </div>
+            `).join('');
+
+            renderPagination(filtered.length);
+        }
+
+        function renderPagination(total) {
+            const pages = Math.ceil(total / itemsPerPage);
+            const container = document.getElementById('pagination');
+            if (pages <= 1) { container.innerHTML = ''; return; }
+
+            let html = '';
+            for (let i = 1; i <= pages; i++) {
+                const active = i === currentPage ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-50';
+                html += `<button onclick="setPage(${i})" class="w-10 h-10 rounded-xl font-medium transition-all border border-slate-100 ${active}">${i}</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        window.setPage = p => { currentPage = p; render(); window.scrollTo({top:0, behavior:'smooth'}); };
+        window.openLightbox = url => { 
+            const lb = document.getElementById('lightbox');
+            document.getElementById('lightboxImg').src = url;
+            lb.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        };
+        window.closeLightbox = () => {
+            document.getElementById('lightbox').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        };
+
+        window.onload = init;
+    </script>
+</body>
+</html>
