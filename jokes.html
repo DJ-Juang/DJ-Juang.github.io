@@ -1,213 +1,247 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>幽默集錦 - 點擊看驚喜</title>
+    <title>笑話大觀園：經典幽默精選</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --primary-gradient: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
-            --accent-color: #6c5ce7;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        
         body {
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
         }
 
-        header {
-            text-align: center;
-            padding: 40px 20px;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
         }
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            width: 90%;
-            max-width: 800px;
-            margin-bottom: 50px;
-        }
-
-        /* 小圖示卡片樣式 */
-        .joke-icon-card {
-            background: white;
-            aspect-ratio: 1 / 1;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid transparent;
-        }
-
-        .joke-icon-card:hover {
-            transform: scale(1.05);
-            border-color: var(--accent-color);
-            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.2);
-        }
-
-        .icon {
-            font-size: 3rem;
-            margin-bottom: 10px;
-        }
-
-        .icon-label {
-            font-weight: bold;
-            color: #555;
-            font-size: 0.9rem;
-        }
-
-        /* 彈窗樣式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(5px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 85%;
-            position: relative;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            animation: slideIn 0.3s ease-out;
+        .joke-animate {
+            animation: slideIn 0.4s ease-out;
         }
 
         @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .close-btn {
-            position: absolute;
-            top: 15px; right: 15px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #aaa;
+        .nav-active {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            border-right: 4px solid #4f46e5;
         }
-
-        .modal-title {
-            color: var(--accent-color);
-            margin-top: 0;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .modal-text {
-            line-height: 1.8;
-            color: #333;
-            margin: 20px 0;
-            white-space: pre-wrap;
-        }
-
-        .comic-btn {
-            display: block;
-            text-align: center;
-            background: #00b894;
-            color: white;
-            text-decoration: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-
-        .comic-btn:hover { opacity: 0.9; }
-
-        .multi-btn { margin-top: 10px; background: #0984e3; }
     </style>
 </head>
-<body>
+<body class="flex flex-col md:flex-row h-screen overflow-hidden">
 
-<header>
-    <h1>🃏 幽默百寶箱</h1>
-    <p>點擊下方圖示，探索幽默智慧 [cite: 1]</p>
-</header>
-
-<div class="grid-container">
-    <div class="joke-icon-card" onclick="openModal('三道菜', '看不到的菜：蝦子（瞎子）\n聽不見的菜：木耳（沒耳）\n既看不到又聽不見：龍蝦（聾瞎）\n\n💡 智慧：人生少一點點計較，多一點點靈活與幽默。 ', ['https://drive.google.com/file/d/1bAA6743e70Eja6c1daE7HlRTPeorVI-e/view'])">
-        <div class="icon">🍱</div>
-        <div class="icon-label">三道菜</div>
-    </div>
-    <div class="joke-icon-card" onclick="openModal('三隻鸚鵡', '三隻外觀相同的鸚鵡，分別會電腦、UNIX、以及什麼都不做。什麼都不做的最貴，因為其他兩隻都叫它「老闆」。 ', ['https://drive.google.com/file/d/1it_115uRsgki3q2rwCOq2L0WY6yqafnx/view', 'https://drive.google.com/file/d/1f29rmyXEmsZWSjsC2n4zTjTSE3qAqRiy/view'])">
-        <div class="icon">🦜</div>
-        <div class="icon-label">鸚鵡老闆</div>
-    </div>
-    <div class="joke-icon-card" onclick="openModal('轉移疼痛', '醫生發明轉移生產陣痛的機器，先生要求傳送100%痛苦，結果妻子輕鬆產子，回到家卻發現郵差死在門口。 [cite: 3]', ['https://drive.google.com/file/d/1vVJyizxG16deKDwby9GqUmgZn-rDks-d/view'])">
-        <div class="icon">⚡</div>
-        <div class="icon-label">陣痛轉移</div>
-    </div>
-    <div class="joke-icon-card" onclick="openModal('血液檢查', '一人因為驗血割手指而哭，另一人聽完大哭，因為他是來做「尿液測試」的。 [cite: 3]', ['https://drive.google.com/file/d/1PsbdV59OwuSl_PyhYjVQ1AXCNdOGBXYL/view'])">
-        <div class="icon">💉</div>
-        <div class="icon-label">驗血風波</div>
-    </div>
-    <div class="joke-icon-card" onclick="openModal('這一坨是什麼', '男子研究醉漢手中不明物體，覺得像塑膠又像橡膠。醉漢解答：「那是我鼻孔裡的。」 [cite: 3]', ['https://drive.google.com/file/d/1lG6GkXilayP8iWpd5E3IGu45c8gz_sfu/view'])">
-        <div class="icon">🤔</div>
-        <div class="icon-label">神祕物體</div>
-    </div>
-    <div class="joke-icon-card" onclick="openModal('貸款停車', '百萬富翁貸款5000元並抵押勞斯萊斯，兩週利息15.4元。其實是為了找最便宜的市中心停車場。 ', ['https://drive.google.com/file/d/1r2kRQIx1OXXa1zBZR89XSCdSuaB4ck5d/view'])">
-        <div class="icon">🚗</div>
-        <div class="icon-label">富豪停車</div>
-    </div>
-    <div class="joke-icon-card" onclick="openModal('答案一樣', '老師問：為什麼答案跟同學一樣？\n小明：因為題目一樣啊！\n老師：為什麼錯的也一樣？\n小明：因為同一個老師教的！ [cite: 5]', ['https://drive.google.com/file/d/15oZlBQSl4lQEI24nagKZr6y-MT_idOMr/view'])">
-        <div class="icon">📝</div>
-        <div class="icon-label">考卷祕辛</div>
-    </div>
-    <div class="joke-icon-card" onclick="openModal('夫妻冷戰', '夫留條：明天 6:30 叫我起床。\n妻隔天留條：死鬼，起床了。 [cite: 5]', ['https://drive.google.com/file/d/13OyYUFsJUfPc93vo-rCm1HeJCQnOTu7z/view'])">
-        <div class="icon">🧊</div>
-        <div class="icon-label">冷戰字條</div>
-    </div>
-</div>
-
-<div id="jokeModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <span class="close-btn" onclick="document.getElementById('jokeModal').style.display='none'">&times;</span>
-        <h2 id="modalTitle" class="modal-title"></h2>
-        <div id="modalText" class="modal-text"></div>
-        <div id="modalLinks"></div>
-    </div>
-</div>
-
-<script>
-    function openModal(title, text, links) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalText').innerText = text;
+    <!-- 側邊欄：導覽與分類 -->
+    <aside class="w-full md:w-72 bg-white border-r border-gray-200 flex flex-col h-auto md:h-full">
+        <div class="p-6 border-b border-gray-100 flex items-center space-x-2">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl">
+                <i class="fa-solid fa-face-grin-squint"></i>
+            </div>
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight">笑話大觀園</h1>
+        </div>
         
-        const linkContainer = document.getElementById('modalLinks');
-        linkContainer.innerHTML = '';
-        links.forEach((link, index) => {
-            const btn = document.createElement('a');
-            btn.href = link;
-            btn.target = '_blank';
-            btn.className = 'comic-btn' + (index > 0 ? ' multi-btn' : '');
-            btn.innerText = links.length > 1 ? `🖼️ 查看漫畫圖解 (${index + 1})` : '🖼️ 查看漫畫圖解';
-            linkContainer.appendChild(btn);
-        });
+        <nav class="flex-1 overflow-y-auto custom-scrollbar py-4">
+            <div class="px-6 mb-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">主選單</div>
+            <button onclick="changeCategory('all')" id="nav-all" class="w-full text-left px-6 py-3 flex items-center hover:bg-gray-50 transition-colors nav-active">
+                <i class="fa-solid fa-layer-group w-6"></i> 顯示全部
+            </button>
+            <button onclick="getRandomJoke()" class="w-full text-left px-6 py-3 flex items-center hover:bg-gray-50 transition-colors text-gray-600">
+                <i class="fa-solid fa-dice w-6"></i> 隨機抽一個
+            </button>
 
-        document.getElementById('jokeModal').style.display = 'flex';
-    }
+            <div class="px-6 mt-8 mb-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">精選主題</div>
+            <div id="category-list">
+                <!-- 動態注入分類按鈕 -->
+            </div>
+        </nav>
 
-    function closeModal(event) {
-        document.getElementById('jokeModal').style.display = 'none';
-    }
-</script>
+        <div class="p-6 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
+            精選 20+ 篇經典笑話<br>
+            © 2024 幽默集錦
+        </div>
+    </aside>
 
+    <!-- 主內容區 -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        
+        <!-- 頂部資訊列 -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+            <div class="text-sm text-gray-500">目前顯示：<span id="current-cat-text" class="font-bold text-indigo-600">全部笑話</span></div>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleViewMode()" class="text-gray-400 hover:text-indigo-600">
+                    <i id="view-icon" class="fa-solid fa-grid-2"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- 內容呈現區 -->
+        <div id="content-container" class="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
+            <!-- 笑話列表將在這裡生成 -->
+            <div id="joke-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+        </div>
+
+    </main>
+
+    <!-- 浮動詳情模態框 -->
+    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden joke-animate">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <span id="modal-cat" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">分類</span>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div id="modal-content" class="text-lg md:text-xl text-gray-700 leading-relaxed whitespace-pre-wrap">內容</div>
+            </div>
+            <div class="p-6 bg-gray-50 flex justify-between items-center">
+                <div class="flex space-x-2">
+                    <button onclick="copyFromModal()" class="flex items-center space-x-1 text-sm text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg transition">
+                        <i class="fa-solid fa-copy"></i> <span>複製全文</span>
+                    </button>
+                </div>
+                <button onclick="closeModal()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-indigo-700 transition">知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full opacity-0 transition-opacity pointer-events-none z-[100]">
+        複製成功！
+    </div>
+
+    <script>
+        const jokes = [
+            { id: 1, cat: "職場篇", title: "鸚鵡老闆", content: "一位男子走進寵物店要買一隻鸚鵡，老闆指三隻外觀相同且同在一支棲息木上的鸚鵡說：『左邊那隻500元』。\n\n這男子問：『為什麼這隻鸚鵡值這麼多錢？』\n老闆說：『這隻知道如何使用電腦』。\n\n接著，他問中間那隻值多少，所得到的答案是1000元﹐因為這隻鸚鵡除了擁有第一隻所有的本事以外﹐它還懂得如何操作UNIX作業系統；\n\n很自然地﹐這男子驚奇地接著問第三隻的價格﹐答案是2000元；\n他問：『它能作什麼？』\n老闆回答：『老實說﹐我從未見過它作過什麼事；但其他兩隻都叫它老闆』" },
+            { id: 2, cat: "驚悚幽默", title: "誰是郵差", content: "一對已婚夫婦一起到醫院去待產。醫生告知他們他發明了一部能將太太生產的陣痛傳送到先生身上的機器。\n\n醫生一開始將開關設在10%的地方，解釋雖然只有10%的程度可能已是先生未曾經歷的疼痛。但是當生產開始時，先生沒有感覺，所以他要求醫生將疼痛程度提高。\n\n醫生接著將機器傳送疼痛的按鈕轉到20%的地方。先生還是沒什麼感覺。醫生量了先生的血壓與脈博很驚訝得發現他身體的狀況良好。\n\n此時，他們倆都決定要往50%嘗試。結果先生還是感覺一切正常。既然這能大量舒緩老婆的痛苦，於是他要醫生將所有的疼痛都傳送到他身上。老婆毫無痛苦地生下了健康的小孩。\n\n當他們回家時，發現郵差死在他們的前亭裡。" },
+            { id: 3, cat: "校園篇", title: "用功的定義", content: "一名學生走進年輕教授的辦公室。她瞄了瞄大廳，把門關上，懇求的跪下來。\n\n『我願意做\"任何事\"來通過這堂考試。』她靠近他，輕甩秀髮，用著帶有某種意味的眼神看著他的眼睛。『我是說..』她輕聲地說，『我願意做\"任何事\"。』\n\n他回看著她。『任何事?』\n『任何事。』\n他的聲音變得柔和。『任何事?』\n『任何事。』\n他輕聲的說。『你願意\"用功\"嗎?』" },
+            { id: 4, cat: "醫療篇", title: "尿液測試", content: "二位男子坐在診所外﹐其中一位哭的非常傷心﹐故另一位便問他：『你為什麼哭泣呢？』\n第一位回答：『我來這裡作血液測試』\n第二位又問：『那又怎樣？你為什麼哭？難道你害怕嗎？』\n第一位回答：『不，只是在檢驗的過程中他們割我的手指』\n\n第二位在聽完後便開始哭泣起來，第一位吃驚地問他：『你為什麼哭泣呢？』\n第二位回答：『我來這裡作尿液測試』" },
+            { id: 5, cat: "職場篇", title: "愚蠢的司機", content: "兩個有錢人在俱樂部閒聊。其中一人說：『我的司機實在很笨，你看。』\n他叫吉米過來：『這裡有十元，去幫我買一輛Mercedes。』吉米立刻跑去。\n另一人說：『那沒什麼，比利！回家看看我在不在家。』比利也跑回家。\n\n稍後，兩個司機在街上相遇。吉米說：『我老闆太笨，叫我拿10元買賓士，他不知道今天是週日展示間沒開嗎？』\n比利說：『我老闆更笨，叫我回家看他在不在家，他有行動電話是不會自己打嗎？』" },
+            { id: 6, cat: "科技篇", title: "萬能電腦", content: "男人去藥房試用能治百病的電腦。投十元尿樣，印出：『你手肘發炎，浸溫水兩週可改善。』\n\n他想愚弄電腦，混了水龍頭水、小狗便便、老婆女兒尿液及精液。電腦這次印出：\n1.你家水太硬了。\n2.你家的狗有虫。\n3.你女兒在喀藥。\n4.你老婆懷孕，小孩不是你的。\n5.如果你不停止胡鬧，手肘發炎永遠不會好。" },
+            { id: 7, cat: "爆笑生活", title: "鼻孔裡的塑膠", content: "一名男士在酒吧遇到醉漢一直揉搓手中東西，說：『看起來像塑膠，感覺像橡膠。』\n男子拿過來仔細研究，點頭認同：『真的，這到底是什麼？你哪拿的？』\n醉漢回答：『我鼻孔裡啊！』" },
+            { id: 8, cat: "聰明理財", title: "停車費妙招", content: "百萬富豪到銀行抵押勞斯萊斯借5000元出國兩週。回來還款時利息僅15.4元。\n銀行員問：『您這麼有錢為何要借5000元？』\n富豪笑說：『曼哈頓哪裡有停兩週車卻只收15.4元的地方？』" },
+            { id: 9, cat: "兩性篇", title: "特別治療", content: "醫生告訴太太，先生病重，需要每天豐盛早餐、不能讓他做家事、且性生活要滿足才能康復。\n回家路上先生問：『醫生說什麼？』\n太太冷淡回答：『你快死了。』" },
+            { id: 10, cat: "餐廳篇", title: "效率顧問", content: "男子在餐廳發現侍者口袋隨時有乾淨湯匙，侍者說是管理顧問建議，可省回廚房拿的時間。又發現侍者褲襠有條線，侍者說拉線「小弟弟」會出來，手不沾污省洗手時間。\n男子問：『那怎麼弄回去？』\n侍者答：『別人我不知道，但我都是用湯匙弄回去。』" },
+            { id: 11, cat: "美人魚篇", title: "最後一擊", content: "小兒子遇到美人魚，美人魚說相好15次就復活全家。小兒子一直加碼到30次。美人魚嚇到答應。\n小兒子最後問：『等一下，我怎麼知道三十回合後，妳會不會像我家那頭乳牛一樣，被我給折騰死了？』" },
+            { id: 12, cat: "老太太篇", title: "望遠鏡", content: "老太太報警說隔壁大樓有人裸體。警官到了看了半天說：『女士，我沒看到裸男啊。』\n老太太說：『你必須使用望遠鏡才能看到他。』" },
+            { id: 13, cat: "校園篇", title: "選得好", content: "工程系學生騎新車，說美女脫光衣服讓他「擁有一切想要的」。\n朋友點頭：『選得好，她的衣服絕對不適合你。』" },
+            { id: 14, cat: "爆笑生活", title: "廚房那個婊子", content: "小孩玩電動火車罵髒話被關房。兩小時後出來很有禮貌地廣播：『各位旅客請攜帶隨身行李，歡迎再次搭乘...』\n接著說：『至於那些抱怨火車誤點2小時的旅客，請找廚房那個婊子。』" },
+            { id: 15, cat: "高爾夫球", title: "幸運青蛙", content: "男子跟隨青蛙打高爾夫得高分，又去拉斯維加斯贏大錢。青蛙要求親吻，親完後變成15歲女孩。\n男子對法官說：『事情經過就是這樣，這就是為什麼這女孩會在我房裡的原因。』" },
+            { id: 16, cat: "兩性篇", title: "爸爸是藥劑師", content: "男孩去藥房買保險套準備初夜。晚餐時對女友父母虔誠禱告20分鐘。女友小聲說：『不知你這麼虔誠。』\n男孩回嘴：『我也從來不知道妳爸爸是藥劑師！』" },
+            { id: 17, cat: "教堂篇", title: "鋼琴底下的神父", content: "男子告解跟女友、女友妹妹、同事、舅媽都上床了。神父嚇到躲在鋼琴下。\n男子問原因，神父答：『抱歉孩子，我突然發覺這裡只有我一個人。』" },
+            { id: 18, cat: "冒險篇", title: "第三個帳篷", content: "美國大兵通過三項考驗：喝完100瓶酒、拔掉獅子腳刺、滿足性渴女。他在獅子帳篷遍體鱗傷後跑出來問：『那第三個手掌有刺的女子在哪？』" },
+            { id: 19, cat: "婚姻生活", title: "心理醫生與巫醫", content: "巫醫給男子藥粉，喊「123」就變長，再喊「123」就縮回。回家想給老婆驚喜，一喊完勃起，老婆轉頭問：『你數123做什麼？』" },
+            { id: 20, cat: "中世紀", title: "貞操帶鑰匙", content: "騎士東征前給隨從貞操帶鑰匙，說10年沒回就給你。才走一分鐘隨從衝過來大喊：『大人！你給的鑰匙是錯的！』" },
+            { id: 21, cat: "職場篇", title: "職業倦怠", content: "一年365天，扣掉睡覺、週末、吃飯、假、病假。蕭伯納說：『最後只剩下一天工作，你絕對別想再錯過這唯一的一天！』" },
+            { id: 22, cat: "爆笑生活", title: "吸掉巧克力", content: "朋友把外婆桌上花生吃光。外婆說：『沒關係，自從我牙掉光後，我也只能吸掉外層巧克力而已。』" },
+            { id: 23, cat: "兩性篇", title: "吃了我的襪子", content: "新婚夜吉米擔心腳臭把襪子塞床下。凱西親完他說有話說，吉米：『我知道，妳剛才吃了我的襪子。』" },
+            { id: 24, cat: "爆笑生活", title: "種馬鈴薯", content: "犯人老婆問何時種馬鈴薯。犯人回：『別挖園子，我埋了槍。』隔天調查員挖遍後院。犯人再回：『現在是種馬鈴薯的時候了。』" },
+            { id: 25, cat: "爆笑生活", title: "烤豆子的副作用", content: "男主角超愛烤豆子，生日派對被蒙眼。他在老婆接電話時狂放連環屁，還用餐巾搧風。老婆回來大喊驚喜揭開頭巾——桌旁坐了12位祝賀貴賓。" }
+        ];
+
+        let currentCat = 'all';
+
+        // 初始化
+        function init() {
+            renderCategories();
+            renderJokes();
+        }
+
+        function renderCategories() {
+            const cats = [...new Set(jokes.map(j => j.cat))];
+            const list = document.getElementById('category-list');
+            list.innerHTML = cats.map(c => `
+                <button onclick="changeCategory('${c}')" id="nav-${c}" class="w-full text-left px-10 py-3 flex items-center hover:bg-gray-50 transition-colors text-gray-500 text-sm">
+                    ${c}
+                </button>
+            `).join('');
+        }
+
+        function renderJokes() {
+            const container = document.getElementById('joke-grid');
+            const filtered = currentCat === 'all' ? jokes : jokes.filter(j => j.cat === currentCat);
+            
+            document.getElementById('current-cat-text').innerText = currentCat === 'all' ? '全部笑話' : currentCat;
+
+            container.innerHTML = filtered.map(j => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between joke-animate">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded">${j.cat}</span>
+                            <span class="text-gray-300 text-xs">#${j.id}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">${j.title}</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${j.content.replace(/\n/g, ' ')}</p>
+                    </div>
+                    <div class="mt-6 flex justify-end items-center space-x-3">
+                        <button onclick="openModal(${j.id})" class="text-indigo-600 text-xs font-bold hover:bg-indigo-50 px-3 py-2 rounded-lg transition">
+                            閱讀全文 <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeCategory(cat) {
+            // 切換按鈕樣式
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-indigo-600'));
+            document.getElementById(`nav-${cat}`).classList.add('nav-active');
+            
+            currentCat = cat;
+            renderJokes();
+            
+            // 手機版自動滾動到頂部
+            if(window.innerWidth < 768) {
+                document.getElementById('content-container').scrollTop = 0;
+            }
+        }
+
+        function getRandomJoke() {
+            const randomIndex = Math.floor(Math.random() * jokes.length);
+            openModal(jokes[randomIndex].id);
+        }
+
+        // 模態框邏輯
+        let currentModalJoke = null;
+
+        function openModal(id) {
+            const joke = jokes.find(j => j.id === id);
+            currentModalJoke = joke;
+            document.getElementById('modal-cat').innerText = joke.cat;
+            document.getElementById('modal-content').innerText = joke.content;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        function copyFromModal() {
+            if(!currentModalJoke) return;
+            const el = document.createElement('textarea');
+            el.value = currentModalJoke.content;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            const toast = document.getElementById('toast');
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
+        }
+
+        init();
+    </script>
 </body>
 </html>
