@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幽默集錦 - 點擊看驚喜</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --primary-gradient: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            --accent-color: #6c5ce7;
+        }
+
+        body {
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 50px;
+        }
+
+        /* 小圖示卡片樣式 */
+        .joke-icon-card {
+            background: white;
+            aspect-ratio: 1 / 1;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+        }
+
+        .joke-icon-card:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.2);
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .icon-label {
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        /* 彈窗樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 85%;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px; right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .modal-title {
+            color: var(--accent-color);
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .modal-text {
+            line-height: 1.8;
+            color: #333;
+            margin: 20px 0;
+            white-space: pre-wrap;
+        }
+
+        .comic-btn {
+            display: block;
+            text-align: center;
+            background: #00b894;
+            color: white;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .comic-btn:hover { opacity: 0.9; }
+
+        .multi-btn { margin-top: 10px; background: #0984e3; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🃏 幽默百寶箱</h1>
+    <p>點擊下方圖示，探索幽默智慧 [cite: 1]</p>
+</header>
+
+<div class="grid-container">
+    <div class="joke-icon-card" onclick="openModal('三道菜', '看不到的菜：蝦子（瞎子）\n聽不見的菜：木耳（沒耳）\n既看不到又聽不見：龍蝦（聾瞎）\n\n💡 智慧：人生少一點點計較，多一點點靈活與幽默。 ', ['https://drive.google.com/file/d/1bAA6743e70Eja6c1daE7HlRTPeorVI-e/view'])">
+        <div class="icon">🍱</div>
+        <div class="icon-label">三道菜</div>
+    </div>
+    <div class="joke-icon-card" onclick="openModal('三隻鸚鵡', '三隻外觀相同的鸚鵡，分別會電腦、UNIX、以及什麼都不做。什麼都不做的最貴，因為其他兩隻都叫它「老闆」。 ', ['https://drive.google.com/file/d/1it_115uRsgki3q2rwCOq2L0WY6yqafnx/view', 'https://drive.google.com/file/d/1f29rmyXEmsZWSjsC2n4zTjTSE3qAqRiy/view'])">
+        <div class="icon">🦜</div>
+        <div class="icon-label">鸚鵡老闆</div>
+    </div>
+    <div class="joke-icon-card" onclick="openModal('轉移疼痛', '醫生發明轉移生產陣痛的機器，先生要求傳送100%痛苦，結果妻子輕鬆產子，回到家卻發現郵差死在門口。 [cite: 3]', ['https://drive.google.com/file/d/1vVJyizxG16deKDwby9GqUmgZn-rDks-d/view'])">
+        <div class="icon">⚡</div>
+        <div class="icon-label">陣痛轉移</div>
+    </div>
+    <div class="joke-icon-card" onclick="openModal('血液檢查', '一人因為驗血割手指而哭，另一人聽完大哭，因為他是來做「尿液測試」的。 [cite: 3]', ['https://drive.google.com/file/d/1PsbdV59OwuSl_PyhYjVQ1AXCNdOGBXYL/view'])">
+        <div class="icon">💉</div>
+        <div class="icon-label">驗血風波</div>
+    </div>
+    <div class="joke-icon-card" onclick="openModal('這一坨是什麼', '男子研究醉漢手中不明物體，覺得像塑膠又像橡膠。醉漢解答：「那是我鼻孔裡的。」 [cite: 3]', ['https://drive.google.com/file/d/1lG6GkXilayP8iWpd5E3IGu45c8gz_sfu/view'])">
+        <div class="icon">🤔</div>
+        <div class="icon-label">神祕物體</div>
+    </div>
+    <div class="joke-icon-card" onclick="openModal('貸款停車', '百萬富翁貸款5000元並抵押勞斯萊斯，兩週利息15.4元。其實是為了找最便宜的市中心停車場。 ', ['https://drive.google.com/file/d/1r2kRQIx1OXXa1zBZR89XSCdSuaB4ck5d/view'])">
+        <div class="icon">🚗</div>
+        <div class="icon-label">富豪停車</div>
+    </div>
+    <div class="joke-icon-card" onclick="openModal('答案一樣', '老師問：為什麼答案跟同學一樣？\n小明：因為題目一樣啊！\n老師：為什麼錯的也一樣？\n小明：因為同一個老師教的！ [cite: 5]', ['https://drive.google.com/file/d/15oZlBQSl4lQEI24nagKZr6y-MT_idOMr/view'])">
+        <div class="icon">📝</div>
+        <div class="icon-label">考卷祕辛</div>
+    </div>
+    <div class="joke-icon-card" onclick="openModal('夫妻冷戰', '夫留條：明天 6:30 叫我起床。\n妻隔天留條：死鬼，起床了。 [cite: 5]', ['https://drive.google.com/file/d/13OyYUFsJUfPc93vo-rCm1HeJCQnOTu7z/view'])">
+        <div class="icon">🧊</div>
+        <div class="icon-label">冷戰字條</div>
+    </div>
+</div>
+
+<div id="jokeModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="document.getElementById('jokeModal').style.display='none'">&times;</span>
+        <h2 id="modalTitle" class="modal-title"></h2>
+        <div id="modalText" class="modal-text"></div>
+        <div id="modalLinks"></div>
+    </div>
+</div>
+
+<script>
+    function openModal(title, text, links) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalText').innerText = text;
+        
+        const linkContainer = document.getElementById('modalLinks');
+        linkContainer.innerHTML = '';
+        links.forEach((link, index) => {
+            const btn = document.createElement('a');
+            btn.href = link;
+            btn.target = '_blank';
+            btn.className = 'comic-btn' + (index > 0 ? ' multi-btn' : '');
+            btn.innerText = links.length > 1 ? `🖼️ 查看漫畫圖解 (${index + 1})` : '🖼️ 查看漫畫圖解';
+            linkContainer.appendChild(btn);
+        });
+
+        document.getElementById('jokeModal').style.display = 'flex';
+    }
+
+    function closeModal(event) {
+        document.getElementById('jokeModal').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
