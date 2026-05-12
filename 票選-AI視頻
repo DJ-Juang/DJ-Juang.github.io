@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動畫影片大賞 - 影片票選系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #f8fafc;
+        }
+
+        .video-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+
+        .video-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .video-card.selected {
+            border-color: #fbbf24;
+            background-color: #fffbeb;
+            transform: scale(1.03);
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
+        }
+
+        .selected-badge {
+            display: none;
+        }
+
+        .selected .selected-badge {
+            display: flex;
+        }
+
+        /* 浮動提示樣式 */
+        .toast-container {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(30, 41, 59, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 99px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
+            animation: slideUp 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-effect {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="pb-24">
+
+    <!-- 浮動訊息容器 -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <header class="bg-gradient-to-br from-indigo-700 via-purple-700 to-indigo-900 text-white py-16 px-4 shadow-xl text-center mb-10 relative overflow-hidden">
+        <div class="relative z-10">
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight">🎬 動畫影片大賞</h1>
+            <p class="text-indigo-100 text-lg md:text-xl font-light">發現精彩創意，選出您最心儀的 1~3 部作品</p>
+            
+            <div class="flex flex-wrap justify-center gap-4 mt-8">
+                <div id="selection-status" class="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/30 text-sm font-bold">
+                    已選擇：<span id="count" class="text-yellow-400 text-lg">0</span> / 3
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4">
+        <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <!-- JS 載入內容 -->
+        </div>
+    </main>
+
+    <!-- 底部固定的送出按鈕 -->
+    <div class="fixed bottom-0 left-0 w-full bg-white/90 glass-effect border-t p-4 shadow-2xl flex justify-center items-center z-50">
+        <button id="submit-vote" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-12 rounded-full shadow-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed w-full max-w-md">
+            送出投票
+        </button>
+    </div>
+
+    <script>
+        // 影片資料清單
+        const rawData = [
+            { id: 1, title: "外賣小哥", video: "https://drive.google.com/file/d/1E6_jdJsL3HwU-N-JF4SkFeUAoHAgtMfO/view", thumb: "https://drive.google.com/file/d/1LXnRPc6y4jBpImMAOWmjbw8WRyQvPN8O/view" },
+            { id: 2, title: "同性戀", video: "https://drive.google.com/file/d/1M19M21RjtikT1b8urS--px4m9UeuKdvh/view", thumb: "https://drive.google.com/file/d/16CBb83N1LdILizXPUYU6T7xWyaZpTEN1/view" },
+            { id: 3, title: "日月潭攻略", video: "https://drive.google.com/file/d/1xmID__rsIvW4NE9NqQTsx1VL2gqpSfma/view", thumb: "https://drive.google.com/file/d/1a-fCBCPl3eAzUZRdKdNbxACm0c4VioKP/view" },
+            { id: 4, title: "關門大弟子", video: "https://drive.google.com/file/d/1Z0JfqcwKvUcdhDBq3pMNsUlzCVtZ1VSm/view", thumb: "https://drive.google.com/file/d/1AiB_ZIEjtCKnxdG9Y5HGhXYDjNLF-ZjQ/view" },
+            { id: 5, title: "秦始皇-十八層地獄", video: "https://drive.google.com/file/d/17CF4yC-bPbhpLZNgt3JsRY12p5iwleeY/view", thumb: "https://drive.google.com/file/d/1WzlSHe49StAME6eWRskcMb6O1ka8IS1k/view" },
+            { id: 6, title: "糊塗老醫師-量好了沒", video: "https://drive.google.com/file/d/16k8NEfVsloTKKbNusVvumAiRnfScio4B/view", thumb: "https://drive.google.com/file/d/1eJejgTLIpEthyIT8YpTAeywIchBcsSz8/view" },
+            { id: 7, title: "與好友出遊", video: "https://drive.google.com/file/d/1mQDceLM4fM_ou1Zyv8ZYpxqY8KkFfhzZ/view", thumb: "https://drive.google.com/file/d/1-yMdVwQiz52zyoikmnBByt9azjAwADh3/view" },
+            { id: 8, title: "動物園-猩猩語言", video: "https://drive.google.com/file/d/1MPipA7Evyd-6hDSchT61nrWneciFzsJ8/view", thumb: "https://drive.google.com/file/d/1ECtcqXT9oeyShNtlC7xGnBy70HWIdUry/view" },
+            { id: 9, title: "飛機故障", video: "https://drive.google.com/file/d/15I9VguSkmGtFO8zRVe_Dn5JNtBwAW50y/view", thumb: "https://drive.google.com/file/d/19wV9RDASE7p4-nwybQfuNPBTJqfyST6Y/view" },
+            { id: 10, title: "關你鳥事", video: "https://drive.google.com/file/d/1PfR0Lre4XtW6LJiZYcTEPLAlO8BGi1v_/view", thumb: "https://drive.google.com/file/d/11--JTduZsjgMbz9hQ_g3WgaYAtzN2_HX/view" },
+            { id: 11, title: "修理玩具", video: "https://drive.google.com/file/d/13Nl4n1yQOC4VjK4xpjJpYtBTW1wO5_5G/view", thumb: "https://drive.google.com/file/d/1o646ZmcbucJC7jZSDG-xStcE7bHKAUn4/view" },
+            { id: 12, title: "我的家人-公仔集", video: "https://drive.google.com/file/d/1ulGICsXHCJkX_pE6PnZvg1W3lqvacKup/view", thumb: "https://drive.google.com/file/d/1F2wbDAYFFR4jUP5GXCoLXVG74J-IZrEh/view" },
+            { id: 13, title: "這杯子是濤保買的", video: "https://drive.google.com/file/d/1i7HiHmv7fxPqIBCP_sKcVvRHbik2mBW-/view", thumb: "https://drive.google.com/file/d/1QUQcDIOFhXHAvYCOG9r65u6tr2KdJPLq/view" },
+            { id: 14, title: "禪宗公案-磨磚做鏡", video: "https://drive.google.com/file/d/1ImM_UeO5zh6yrvn3Ajx4kyOFkunmJdty/view", thumb: "https://drive.google.com/file/d/1HQUwLjfg4EbDfEywqM2KupEH59HUGUmx/view" },
+            { id: 15, title: "買魩仔魚", video: "https://drive.google.com/file/d/12OgbmL96XlGyqsMEj5oDPQmrjDValIt5/view", thumb: "https://drive.google.com/file/d/1W7yYg-fxhMsouUXBms0RJBtxfayHWTKA/view" },
+            { id: 16, title: "外甥女-迪士尼打工", video: "https://drive.google.com/file/d/17vNMRFxzkIK3ZXKdHgDob0M1M4aeXNf-/view", thumb: "https://drive.google.com/file/d/1JOZd3oDJsH7QgXfgChsaw7_ml44wBaLg/view" },
+            { id: 17, title: "網紅-老奶奶-蹲馬桶", video: "https://drive.google.com/file/d/1VEkZOpzBYN8yLXp94rAm2I7gsJMAf33S/view", thumb: "https://drive.google.com/file/d/1eomBDtLAxBQsDp_zESGfYQ_myDdeZ91I/view" },
+            { id: 18, title: "戰地記者", video: "https://drive.google.com/file/d/10LYljSAbXpS2hqPBU-FYMjlko8ZyqfoI/view", thumb: "https://drive.google.com/file/d/1oO2ErdCObGpNuV60Gz1gJ-M7N0VGzEJF/view" },
+            { id: 19, title: "羽球冠亞軍", video: "https://drive.google.com/file/d/13aZ4ek35VOe8mNBZztYgs6xORlGsUlZ-/view", thumb: "https://drive.google.com/file/d/1Ajk8KoIF06AxNDn27HhzNn3gq9iBqOsQ/view" },
+            { id: 20, title: "當兵 - 想上一號", video: "https://drive.google.com/file/d/1dxgrcaUO_sA6zjCy_DCpY2KrzcJeuli_/view", thumb: "https://drive.google.com/file/d/1xkNYPlMetF1eFBqbUBL5Jwai4ME5N5hs/view" },
+            { id: 21, title: "四格漫畫-貓", video: "https://drive.google.com/file/d/13Kin6YtBH2IShIXQA1yz632bHN6R73p4/view?usp=drive_link", thumb: "https://drive.google.com/file/d/1z28bik7WwJwi3Gym2k7i3ttthJGcdr-b/view?usp=drive_link" },
+            { id: 22, title: "四格漫畫-考試", video: "https://drive.google.com/file/d/1raIsC1PPfOeRf-Mn-o7xmhuNsRljy866/view?usp=drive_link", thumb: "https://drive.google.com/file/d/1zQ67qLe41JC9QWoB9Ad48L44C_-C4NBE/view?usp=drive_link" }
+        ];
+
+        let selectedVideos = new Set();
+
+        // 轉換 Google Drive 連結為穩定縮圖
+        function getSafeThumb(url) {
+            const idMatch = url.match(/[-\w]{25,}/);
+            if (idMatch) {
+                return `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w600`;
+            }
+            return 'https://placehold.co/600x400?text=No+Image';
+        }
+
+        // 浮動提示功能
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            
+            if (type === 'error') {
+                toast.classList.add('bg-red-600');
+                toast.innerHTML = `<i class="fas fa-exclamation-circle text-white"></i> <span>${message}</span>`;
+            } else {
+                toast.innerHTML = `<i class="fas fa-check-circle text-yellow-400"></i> <span>${message}</span>`;
+            }
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }, 2500);
+        }
+
+        // 初始化頁面
+        function init() {
+            const grid = document.getElementById('video-grid');
+            grid.innerHTML = '';
+            rawData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'video-card bg-white rounded-2xl overflow-hidden shadow-md relative group border-2';
+                card.id = `card-${item.id}`;
+                
+                const thumbImg = getSafeThumb(item.thumb);
+
+                card.innerHTML = `
+                    <div class="relative aspect-video bg-slate-100">
+                        <img src="${thumbImg}" class="w-full h-full object-cover" alt="thumbnail" 
+                             onerror="this.src='https://placehold.co/600x400?text=載入失敗'">
+                        <div class="selected-badge absolute top-3 right-3 bg-yellow-400 text-indigo-900 w-10 h-10 rounded-full items-center justify-center font-bold shadow-xl z-10 border-2 border-white">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href="${item.video}" target="_blank" onclick="event.stopPropagation()" class="bg-white p-4 rounded-full text-indigo-600 hover:scale-110 transition-transform">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <span class="text-xs font-bold text-indigo-500">影片 ${item.id}</span>
+                        <h3 class="text-lg font-bold text-slate-800 truncate mt-1">${item.title}</h3>
+                    </div>
+                `;
+                card.onclick = () => toggleSelection(item.id);
+                grid.appendChild(card);
+            });
+        }
+
+        // 切換選取邏輯
+        function toggleSelection(id) {
+            const video = rawData.find(v => v.id === id);
+            if (selectedVideos.has(id)) {
+                selectedVideos.delete(id);
+                showToast(`已取消選取：${video.title}`, 'info');
+            } else {
+                if (selectedVideos.size >= 3) {
+                    showToast("抱歉，最多只能選取 3 部影片！", "error");
+                    return;
+                }
+                selectedVideos.add(id);
+                showToast(`已選取：${video.title} (目前共 ${selectedVideos.size} 部)`, 'info');
+            }
+            updateUI();
+        }
+
+        // 更新介面狀態
+        function updateUI() {
+            rawData.forEach(item => {
+                const card = document.getElementById(`card-${item.id}`);
+                if (card) {
+                    card.classList.toggle('selected', selectedVideos.has(item.id));
+                }
+            });
+            document.getElementById('count').innerText = selectedVideos.size;
+            const submitBtn = document.getElementById('submit-vote');
+            submitBtn.disabled = selectedVideos.size === 0;
+            
+            if (selectedVideos.size > 0) {
+                submitBtn.innerText = `確認投給這 ${selectedVideos.size} 部影片`;
+                submitBtn.classList.replace('bg-indigo-600', 'bg-green-600');
+            } else {
+                submitBtn.innerText = '請選取喜歡的影片';
+                submitBtn.classList.replace('bg-green-600', 'bg-indigo-600');
+            }
+        }
+
+        // 送出按鈕點擊
+        document.getElementById('submit-vote').onclick = () => {
+            const names = Array.from(selectedVideos).map(id => rawData.find(v => v.id === id).title);
+            alert(`🎉 投票成功！您支持了以下作品：\n\n${names.join('\n')}`);
+        };
+
+        window.onload = init;
+    </script>
+</body>
+</html>
