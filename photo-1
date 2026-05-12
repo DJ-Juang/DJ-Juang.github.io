@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的旅遊足跡相簿 - 預覽模式</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .travel-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .travel-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .active-filter {
+            background-color: #2563eb !important;
+            color: white !important;
+            border-color: #2563eb !important;
+        }
+        #lightbox {
+            transition: opacity 0.3s ease;
+        }
+        .img-container img {
+            transition: transform 0.5s ease;
+        }
+        .travel-card:hover .img-container img {
+            transform: scale(1.1);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- 標題區域 -->
+        <header class="mb-12 text-center">
+            <div class="inline-block p-3 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-200">
+                <i class="fa-solid fa-map-location-dot text-white text-3xl"></i>
+            </div>
+            <h1 class="text-4xl font-black text-slate-800 mb-2 tracking-tight">旅遊回憶錄 <span class="text-blue-600">2024-2025</span></h1>
+            <p class="text-slate-500 font-medium">點擊照片可放大檢視精彩瞬間</p>
+            
+            <div id="stats" class="flex flex-wrap justify-center gap-4 mt-8">
+                <!-- 由 JS 填充 -->
+            </div>
+        </header>
+
+        <!-- 篩選列 -->
+        <div class="mb-10 flex flex-wrap gap-3 justify-center items-center bg-white p-4 rounded-3xl shadow-sm border border-slate-200" id="filter-container">
+            <button onclick="changeFilter('all')" class="filter-btn active-filter px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold transition-all hover:border-blue-300">
+                <i class="fa-solid fa-globe mr-2"></i>全部
+            </button>
+            <!-- 動態產生國家按鈕 -->
+        </div>
+
+        <!-- 照片網格 -->
+        <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
+            <!-- 由 JS 填充 -->
+        </div>
+
+        <!-- 分頁控制項 -->
+        <div id="pagination" class="flex justify-center items-center gap-4 py-8">
+            <!-- 由 JS 填充 -->
+        </div>
+        
+        <footer class="mt-24 text-center border-t border-slate-200 pt-10 pb-10">
+            <p class="text-slate-400 text-sm font-bold tracking-widest uppercase">Memory Archive System v2.1</p>
+        </footer>
+    </div>
+
+    <!-- 燈箱 (Lightbox) -->
+    <div id="lightbox" class="fixed inset-0 z-50 hidden bg-slate-950/95 flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeLightbox()">
+        <button class="absolute top-6 right-6 text-white text-4xl hover:text-blue-400 transition-colors" onclick="closeLightbox()">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </button>
+        <div class="max-w-5xl max-h-full relative" onclick="event.stopPropagation()">
+            <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl border-4 border-white/10" alt="放大圖">
+            <div id="lightbox-caption" class="mt-4 text-center">
+                <h2 id="caption-title" class="text-white text-2xl font-bold"></h2>
+                <p id="caption-desc" class="text-slate-400 font-medium"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rawData = `1	2025	中國	上海	https://drive.google.com/file/d/1m_UFVphK9yd-FiRcfWvChMOm0G8tMnOK/view
+2	2025	中國	上海	https://drive.google.com/file/d/1mOvsoJjDDRhVSEfAoHo3EX8viqonhIUn/view
+3	2024	歐洲	立陶宛	https://drive.google.com/file/d/1_x03q-TwGOZPaEqmhMkzj_g-4k_IpbSE/view
+4	2024	歐洲	立陶宛	https://drive.google.com/file/d/1DijhduWQbvmWLLKmv2IHImA2eY_exJWf/view
+5	2024	歐洲	立陶宛	https://drive.google.com/file/d/1paUx-r7HmALYcZ5wXzvRi7gpV5XtWPX7/view
+6	2024	歐洲	立陶宛	https://drive.google.com/file/d/1G1zdfzpV0gve1YdDc5p3uqqH0QjqVOLE/view
+7	2024	歐洲	立陶宛	https://drive.google.com/file/d/1MH0khvhZ0ckrpA2hhUB7LDbiU7FzNIPH/view
+8	2024	歐洲	立陶宛	https://drive.google.com/file/d/1UfyMM4cn9GnmcsXUleI9h5FJxk1jU-JY/view
+9	2024	歐洲	立陶宛	https://drive.google.com/file/d/1cFXOQ-B4v1pNOuLK7R4HsCpvm21ib3iV/view
+10	2024	歐洲	立陶宛	https://drive.google.com/file/d/1TKuvs88klFpqFUidhUIUT1Q6oyUcED-G/view
+11	2024	歐洲	立陶宛	https://drive.google.com/file/d/1qUYh981QR6y3MO7Z_-K11t2sR8o6c79O/view
+12	2024	歐洲	立陶宛	https://drive.google.com/file/d/1oym3_usBIXqcd0OaNtdvE4qgI-iN0Ib7/view
+13	2024	歐洲	立陶宛	https://drive.google.com/file/d/1-XZ24WKJJHzIkT5kvPXMo9Du2AJGYhGf/view
+14	2024	歐洲	立陶宛	https://drive.google.com/file/d/1lF0Xxwv9-g0Rgux0zXLkkyzfujtCIhE/view
+15	2024	歐洲	立陶宛	https://drive.google.com/file/d/17bB32jcCdPUTD6KPMXTuCuGpNfRZ53Y1/view
+16	2024	歐洲	立陶宛	https://drive.google.com/file/d/1XSMshkuuJNYytpuyhFu3x-Em-94Xynka/view
+17	2024	歐洲	立陶宛	https://drive.google.com/file/d/17y8d6tw3oKlsNaJNfexs1qBsBqTAtchM/view
+18	2024	歐洲	立陶宛	https://drive.google.com/file/d/17d6af-NcuEAGq8jBzfNeQxuVHhQdyzvu/view
+19	2024	歐洲	立陶宛	https://drive.google.com/file/d/1hkYKzsTW54xe3bGwOnGST-6Yh3x5xKlK/view
+20	2024	歐洲	立陶宛	https://drive.google.com/file/d/1DfkFxPbd8WYDCT8FFTTozHeMPDfL_URj/view
+21	2024	歐洲	立陶宛	https://drive.google.com/file/d/1Zm42Ub7LUKJ_85MYsh7Nr5llQES9NacX/view
+22	2024	歐洲	立陶宛	https://drive.google.com/file/d/1z41en8kvp-l0F09--7nglhmmy4H9135/view
+23	2024	歐洲	立陶宛	https://drive.google.com/file/d/145tzCzMkTmqDULKzxSQtgHObsXLDgqAq/view
+24	2024	歐洲	立陶宛	https://drive.google.com/file/d/1VKzmAQotLoo-xWs2A8ZJ0RwpmW9Gqif-/view
+25	2024	歐洲	立陶宛	https://drive.google.com/file/d/1n5GzWO6F9zS4pSHPUQRkC52uCf8N3lJn/view
+26	2024	歐洲	立陶宛	https://drive.google.com/file/d/1K4_aNM8YJ5ahZKzsTjP5xkDj6QRRHkyT/view
+27	2024	歐洲	立陶宛	https://drive.google.com/file/d/120HtdOslUXIGPl_L3UfekvVJZCjqHeTq/view
+28	2024	歐洲	立陶宛	https://drive.google.com/file/d/1QHAntoq7oan54qei33b8KgT4OJxkKV-M/view
+29	2024	歐洲	立陶宛	https://drive.google.com/file/d/1YgVe8puy_PVY68fbQB5gB-kxixa4jEmy/view
+30	2024	歐洲	拉脫維亞	https://drive.google.com/file/d/13JLuowd-EUU4ouPM18NINO756Ra9Sfn1/view
+31	2024	歐洲	拉脫維亞	https://drive.google.com/file/d/1VAcFPU1IPzL-z4G1mNFqt1U4LhQTFwp8/view
+32	2024	歐洲	拉脫維亞	https://drive.google.com/file/d/1CE74MNZam8zHygiYeDKniDfoOrPOcGD2/view
+33	2024	歐洲	拉脫維亞	https://drive.google.com/file/d/1kQp6gOD7zz2a_PxoJMTu3H4QT3_yt558/view
+34	2024	歐洲	拉脫維亞	https://drive.google.com/file/d/1BUkrTS3zq-nQG_QnPWL_EOFq-nI_81mh/view
+35	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1elugRlUmf9xlUv91zFeeW0FpIt2wtc3p/view
+36	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1hoqosbT0-tv5hVB8cvaJnN5itaSQk3Tz/view
+37	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1rJOASl9d3TQ3QbWYx2fdUtBdZA3VRcwb/view
+38	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/181l5rx5IeZMBXRVbb5S4QClSADmUmH-p/view
+39	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1WBmLCfvUvXEUPy5mhxCjl21fuU2-v2Q-/view
+40	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1AZsu4u2mZSPQy-Zx5SEzE0la0kAedgj-/view
+41	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1QpUFOMByKo5krFP4siz_jAilGPcvfIof/view
+42	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1-w4oIxE6-XHHYpEP_zG6hlXLtQxoS5lL/view
+43	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1Tnz22Sm8mTQ3dPvL0qMxLZcaOIrFPdAO/view
+44	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1kC8FruubUkZ0kLSE35vnB_bhPJNMDqda/view
+45	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1gkK_xvdkrnu6-Ddo3iYJzIsc7R-gpiUm/view
+46	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1h9yJQaXBuYMb9sGHzFnqniJtOf_d08qX/view
+47	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1kLy6dMAnzROC-CRYyICHT3E5_TgoSFbd/view
+48	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/11QTbWN15MDZJVUd9EfoYY-8Dtn8CeWb1/view
+49	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/1B0qudzYIi16N8FC_qv4HbQPVV5tlRzzz/view
+50	2024	歐洲	愛沙尼亞	https://drive.google.com/file/d/17tg0amjXD_hOiQNL93zJXWZoXsWt_biA/view
+51	2024	歐洲	芬蘭	https://drive.google.com/file/d/1r0nb6h4_zFwCCEZzASDzcfuA4aXWzM-Q/view
+52	2024	歐洲	芬蘭	https://drive.google.com/file/d/1NaBxHzCp_us-5-bZI9YqGlV5Pos7q-LA/view
+53	2024	歐洲	芬蘭	https://drive.google.com/file/d/1I-GfOW00bmk8pCuf7XhdAbpfbVOcmyeB/view
+54	2024	歐洲	芬蘭	https://drive.google.com/file/d/1pgitjKHbpINGuss22qy7GsuOJm3zrZVX/view
+55	2024	歐洲	芬蘭	https://drive.google.com/file/d/1B16z4amzYbloafeGKAXfSXj7kzFJx4JE/view
+56	2024	歐洲	芬蘭	https://drive.google.com/file/d/1l6nKzXZesBdVNYRAzLGOH9bRKHofKVO_/view
+57	2024	歐洲	芬蘭	https://drive.google.com/file/d/1Tr6v-QRn_GlwpejAjbN4POP7gte0RB4e/view
+58	2024	歐洲	芬蘭	https://drive.google.com/file/d/1bV9T9xTtAqVq-IrTty6u0kShi5V_Xp1o/view
+59	2024	歐洲	芬蘭	https://drive.google.com/file/d/1gtKhd_xEuTDOoQ_IEO8zNISUGQX8T52r/view
+60	2024	歐洲	芬蘭	https://drive.google.com/file/d/1GZRwu5YvU_mlPp2uDy0nQLvBE36R1aS-/view`;
+
+        function getThumbnail(url) {
+            const idMatch = url.match(/\/d\/(.+?)\//);
+            const id = idMatch ? idMatch[1] : '';
+            return id ? `https://lh3.googleusercontent.com/d/${id}` : '';
+        }
+
+        const galleryData = rawData.trim().split('\n').map(line => {
+            const parts = line.split('\t');
+            const originalUrl = parts[4].trim();
+            return {
+                id: parts[0],
+                year: parts[1],
+                region: parts[2],
+                country: parts[3],
+                url: originalUrl,
+                thumb: getThumbnail(originalUrl)
+            };
+        });
+
+        // 分頁狀態管理
+        let currentFilter = 'all';
+        let currentPage = 1;
+        const itemsPerPage = 12; // 每頁顯示 12 張
+
+        const gallery = document.getElementById('gallery');
+        const filterContainer = document.getElementById('filter-container');
+        const statsContainer = document.getElementById('stats');
+        const paginationContainer = document.getElementById('pagination');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+
+        function init() {
+            renderStats();
+            renderFilters();
+            updateGallery();
+        }
+
+        function renderStats() {
+            const countries = [...new Set(galleryData.map(d => d.country))];
+            const years = [...new Set(galleryData.map(d => d.year))];
+            const stats = [
+                { label: '造訪區域', value: countries.length, icon: 'fa-earth-europe', color: 'text-blue-500', bg: 'bg-blue-50' },
+                { label: '記錄年份', value: years.join(' - '), icon: 'fa-calendar-check', color: 'text-indigo-500', bg: 'bg-indigo-50' },
+                { label: '影像總計', value: galleryData.length, icon: 'fa-images', color: 'text-sky-500', bg: 'bg-sky-50' }
+            ];
+            statsContainer.innerHTML = stats.map(s => `
+                <div class="${s.bg} p-4 rounded-2xl border border-white/50 flex items-center min-w-[180px] shadow-sm">
+                    <div class="w-10 h-10 flex items-center justify-center bg-white rounded-xl mr-4 shadow-sm">
+                        <i class="fa-solid ${s.icon} ${s.color} text-xl"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">${s.label}</p>
+                        <p class="text-lg font-black text-slate-700">${s.value}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderFilters() {
+            const countries = [...new Set(galleryData.map(d => d.country))];
+            countries.forEach(country => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold transition-all hover:border-blue-300 text-slate-600';
+                btn.innerHTML = `<i class="fa-solid fa-location-dot mr-2 text-slate-300"></i>${country}`;
+                btn.onclick = () => changeFilter(country, btn);
+                filterContainer.appendChild(btn);
+            });
+        }
+
+        // 核心更新邏輯：處理篩選與分頁
+        function updateGallery() {
+            // 1. 篩選資料
+            const filteredData = currentFilter === 'all' 
+                ? galleryData 
+                : galleryData.filter(d => d.country === currentFilter);
+
+            // 2. 計算分頁
+            const totalItems = filteredData.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            // 安全檢查防止頁碼超出範圍
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginatedItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+            // 3. 渲染照片卡片
+            renderCards(paginatedItems);
+
+            // 4. 渲染分頁按鈕
+            renderPagination(totalPages);
+        }
+
+        function renderCards(data) {
+            if (data.length === 0) {
+                gallery.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400 font-bold">目前沒有相符的照片</div>`;
+                return;
+            }
+            gallery.innerHTML = data.map(item => `
+                <div class="travel-card bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm cursor-pointer group" 
+                     onclick="openLightbox('${item.thumb}', '${item.country}', '${item.year} · ${item.region}')">
+                    <div class="img-container relative aspect-[4/3] overflow-hidden bg-slate-200">
+                        <img src="${item.thumb}" alt="${item.country}" class="w-full h-full object-cover" loading="lazy">
+                        <div class="absolute inset-0 bg-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <div class="bg-white/90 backdrop-blur p-3 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                                <i class="fa-solid fa-magnifying-glass-plus text-blue-600"></i>
+                            </div>
+                        </div>
+                        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black text-slate-800 shadow-sm">
+                            ${item.year}
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-black text-slate-800 mb-1 group-hover:text-blue-600 transition-colors">${item.country}</h3>
+                        <p class="text-slate-400 text-sm font-bold">
+                            <i class="fa-solid fa-map-pin mr-1 opacity-50"></i> ${item.region}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let btns = `
+                <button onclick="goToPage(${currentPage - 1})" class="pagination-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                btns += `
+                    <button onclick="goToPage(${i})" class="w-10 h-10 flex items-center justify-center rounded-xl font-bold text-sm transition-all ${currentPage === i ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            btns += `
+                <button onclick="goToPage(${currentPage + 1})" class="pagination-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors" ${currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            `;
+
+            paginationContainer.innerHTML = btns;
+        }
+
+        function changeFilter(country, btnElement) {
+            currentFilter = country;
+            currentPage = 1; // 重置為第一頁
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+            if (btnElement) {
+                btnElement.classList.add('active-filter');
+            } else {
+                document.querySelector('button[onclick*="changeFilter(\'all\'"]').classList.add('active-filter');
+            }
+            
+            updateGallery();
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            updateGallery();
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+        }
+
+        function openLightbox(imgSrc, title, desc) {
+            lightboxImg.src = imgSrc;
+            document.getElementById('caption-title').textContent = title;
+            document.getElementById('caption-desc').textContent = desc;
+            lightbox.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        window.onload = init;
+    </script>
+</body>
+</html>
