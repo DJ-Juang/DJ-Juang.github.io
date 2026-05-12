@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>掌中奇蹟：近景魔術教學互動指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        .magic-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .magic-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+        }
+        .filter-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.5);
+        }
+        .youtube-icon-bg {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+        }
+        .fav-btn {
+            transition: transform 0.2s ease;
+        }
+        .fav-btn:active {
+            transform: scale(1.4);
+        }
+        .duration-badge {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+        }
+        /* 隱藏原生捲軸 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-900/20">
+                    <i class="fas fa-magic text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                        掌中奇蹟
+                    </h1>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest">Magic Teaching Guide</p>
+                </div>
+            </div>
+            
+            <div class="relative w-full md:w-96">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="searchInput" placeholder="搜尋魔術名稱、序號或分類..." 
+                    class="w-full bg-slate-800 border border-slate-700 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-200 placeholder-slate-500 transition-all">
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Stats Section -->
+        <div class="mb-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                <p class="text-slate-500 text-xs mb-1">影片總數</p>
+                <p id="totalCount" class="text-2xl font-bold text-blue-400">0</p>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                <p class="text-slate-500 text-xs mb-1">收藏數量</p>
+                <p id="favCountHeader" class="text-2xl font-bold text-rose-500">0</p>
+            </div>
+            <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 col-span-2 flex justify-between items-center">
+                <div>
+                    <p class="text-slate-500 text-xs mb-1">資料備份</p>
+                    <p class="text-sm text-slate-300">收藏資料儲存於本機瀏覽器</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="exportFavorites()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg transition-colors">匯出</button>
+                    <button onclick="importFavorites()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg transition-colors">匯入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-2 mb-8 items-center">
+            <span class="text-slate-500 text-sm mr-2 font-medium">分類：</span>
+            <button class="filter-btn active px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-sm transition-all" data-category="all">全部</button>
+            <button class="filter-btn px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-sm transition-all text-rose-400 font-bold" data-category="favorites">
+                <i class="fas fa-heart mr-1"></i> 我的最愛 (<span id="favCountBtn">0</span>)
+            </button>
+            <button class="filter-btn px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-sm transition-all" data-category="撲克">撲克牌</button>
+            <button class="filter-btn px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-sm transition-all" data-category="錢幣">錢幣/鈔票</button>
+            <button class="filter-btn px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-sm transition-all" data-category="生活">生活小物</button>
+            <button class="filter-btn px-5 py-2 rounded-full bg-slate-800 border border-slate-700 text-sm transition-all text-amber-400 font-bold" data-category="未解答">尚未解答</button>
+        </div>
+
+        <!-- Video Grid -->
+        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
+    </main>
+
+    <footer class="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-center text-slate-500 text-sm">
+        <p>© 近景魔術學習清單 - 資料將儲存於您的瀏覽器中</p>
+    </footer>
+
+    <script>
+        // 魔術資料庫
+        const magicData = [
+            { id: 1, title: "手表", url: "https://www.youtube.com/watch?v=fcUGVWMNlc4", category: "生活", duration: "05:12" },
+            { id: 2, title: "千元鈔", url: "https://www.youtube.com/watch?v=GoannRO7BQ4", category: "錢幣", duration: "03:45" },
+            { id: 5, title: "6轉9", url: "https://www.youtube.com/shorts/jn07iBCXuvo", category: "生活", duration: "00:30" },
+            { id: 6, title: "螢幕旋轉", url: "https://www.youtube.com/shorts/x7HzE217yTA", category: "生活", duration: "00:15" },
+            { id: 9, title: "猜猜看", url: "https://www.youtube.com/watch?v=CH1LeD0hVwA", category: "生活", duration: "04:20" },
+            { id: 10, title: "水杯袋內翻轉", url: "https://www.youtube.com/watch?v=_TyVuXZleSU", category: "生活", duration: "06:10" },
+            { id: 11, title: "紅包剪千元", url: "https://www.youtube.com/shorts/utRjSikSBiQ", category: "錢幣", duration: "00:58" },
+            { id: 12, title: "錢幣不見", url: "https://www.youtube.com/watch?v=htBLzGP_onI", category: "錢幣", duration: "02:15" },
+            { id: 13, title: "5元出", url: "https://www.youtube.com/watch?v=DlceMVHVT4w", category: "錢幣", duration: "01:50" },
+            { id: 14, title: "項鍊下墜", url: "https://www.youtube.com/shorts/gnVXNYSto0M", category: "生活", duration: "00:42" },
+            { id: 15, title: "硬幣指尖消失", url: "https://www.youtube.com/watch?v=FbsMkLxPSLg", category: "錢幣", duration: "03:20" },
+            { id: 16, title: "錢幣掌中消失", url: "https://www.youtube.com/watch?v=JDbWH3FvAXk", category: "錢幣", duration: "02:40" },
+            { id: 17, title: "鑰匙圈", url: "https://www.youtube.com/watch?v=AsqR5PD_JN4", category: "生活", duration: "04:55" },
+            { id: 19, title: "拍牌變點", url: "https://www.youtube.com/shorts/5uD3cPXtX68", category: "撲克", duration: "00:20" },
+            { id: 20, title: "指尖變牌", url: "https://www.youtube.com/shorts/XXo8loJ_Flo", category: "撲克", duration: "00:35" },
+            { id: 21, title: "旋轉", url: "https://www.youtube.com/watch?v=2mYSruyIWpA", category: "生活", duration: "05:30" },
+            { id: 22, title: "張指", url: "https://www.youtube.com/shorts/z2oc2ulLAGU", category: "生活", duration: "00:12" },
+            { id: 23, title: "往後摸牌變點", url: "https://www.youtube.com/shorts/UlerUxZXQCw", category: "撲克", duration: "00:25" },
+            { id: 24, title: "前摸牌", url: "https://www.youtube.com/shorts/eP6W97JOvlk", category: "撲克", duration: "00:30" },
+            { id: 25, title: "牌蓋幣", url: "https://www.youtube.com/shorts/g4L1rsdp4YY", category: "撲克", duration: "00:40" },
+            { id: 26, title: "雙手遮牌", url: "https://www.youtube.com/shorts/NhxxHNXgKMo", category: "撲克", duration: "00:55" },
+            { id: 29, title: "翻轉至頂序列1", url: "https://www.youtube.com/shorts/4An4prKRDAs", category: "撲克", duration: "00:45" },
+            { id: 30, title: "絲巾 (尚未解答)", url: "https://www.youtube.com/watch?v=hMXxihupZGA", category: "生活", unsolved: true, duration: "03:10" },
+            { id: 31, title: "20張牌兩輪翻轉後4A向上", url: "https://www.youtube.com/watch?v=WHEDaam7sfY", category: "撲克", duration: "08:20" },
+            { id: 33, title: "夾子夾鈔票", url: "https://www.youtube.com/shorts/9JSGrMCMP78", category: "錢幣", duration: "00:48" },
+            { id: 34, title: "旋轉隧道", url: "https://www.youtube.com/watch?v=7efKhFGSgFU", category: "生活", duration: "02:15" },
+            { id: 35, title: "兩張鬼牌夾一張不見了", url: "https://www.youtube.com/shorts/VV7Vy4kdvdvcu", category: "撲克", duration: "00:50" },
+            { id: 36, title: "123上下變動", url: "https://www.youtube.com/shorts/Zuemr67xZWQ", category: "撲克", duration: "00:30" },
+            { id: 37, title: "轉至頂三部曲 (尚未解答)", url: "https://www.youtube.com/watch?v=fS5ZwL-U52g", category: "撲克", unsolved: true, duration: "04:10" },
+            { id: 38, title: "蘋果變色", url: "https://www.youtube.com/shorts/0cqxm-1m0TU", category: "生活", duration: "00:20" },
+            { id: 39, title: "雙手蓋錢幣移位", url: "https://www.youtube.com/watch?v=Wo-TclQqLPQ", category: "錢幣", duration: "05:40" },
+            { id: 40, title: "老K在哪兒 (尚未解答)", url: "https://www.youtube.com/watch?v=5Ks11vyj6gc", category: "撲克", unsolved: true, duration: "02:50" },
+            { id: 41, title: "老K與兩鬼牌", url: "https://www.youtube.com/watch?v=cWgdlSchW9Q", category: "撲克", duration: "06:15" },
+            { id: 42, title: "抓幣至牌下", url: "https://www.youtube.com/watch?v=lXlT3LMbpe8", category: "撲克", duration: "03:30" },
+            { id: 43, title: "123猜A在哪", url: "https://www.youtube.com/watch?v=RUBokyKDg-c", category: "撲克", duration: "04:45" },
+            { id: 44, title: "K在哪成3張3後成3張K (尚未解答)", url: "https://www.youtube.com/watch?v=YA4WMS43f1o", category: "撲克", unsolved: true, duration: "05:20" },
+            { id: 45, title: "迴紋針夾老K 序列1", url: "https://www.youtube.com/watch?v=AP_fN2J__EE", category: "撲克", duration: "03:10" },
+            { id: 46, title: "分不清1跟3", url: "https://www.youtube.com/watch?v=nOWSam9_0gA", category: "撲克", duration: "04:05" },
+            { id: 47, title: "4Q上下跑", url: "https://www.youtube.com/watch?v=8CNXn-5l7iM", category: "撲克", duration: "05:55" },
+            { id: 48, title: "秒變", url: "https://www.youtube.com/shorts/Qr-0nizQzbo", category: "生活", duration: "00:15" },
+            { id: 49, title: "油水分離之一 (尚未解答)", url: "https://www.youtube.com/watch?v=V0CYEjJSl14", category: "撲克", unsolved: true, duration: "03:40" },
+            { id: 50, title: "跟著隊長走", url: "https://www.youtube.com/watch?v=QN7rHSyZSlw", category: "撲克", duration: "07:30" },
+            { id: 51, title: "兩張牌", url: "https://www.youtube.com/watch?v=2sk5ffXhvyo", category: "撲克", duration: "02:10" },
+            { id: 52, title: "騎士亂跑 (尚未解答)", url: "https://www.youtube.com/watch?v=6JpCdegv6AY", category: "生活", unsolved: true, duration: "01:55" },
+            { id: 53, title: "三張牌猜Ace", url: "https://www.youtube.com/watch?v=KUicxaDlUMs", category: "撲克", duration: "04:25" },
+            { id: 54, title: "油水分離之二", url: "https://www.youtube.com/watch?v=2xkTZvtg8Tg", category: "撲克", duration: "03:50" },
+            { id: 55, title: "鬼K鬼 (尚未解答)", url: "https://www.youtube.com/watch?v=Fqt4wMy0WFs", category: "撲克", unsolved: true, duration: "02:30" },
+            { id: 56, title: "瞬間翻牌變色", url: "https://www.youtube.com/watch?v=Cb73MiT30e0", category: "撲克", duration: "03:45" },
+            { id: 58, title: "油水分離之三", url: "https://www.youtube.com/shorts/HxDhdYVr7S4", category: "撲克", duration: "00:55" },
+            { id: 59, title: "抽出中間牌置頂三部曲", url: "https://www.youtube.com/watch?v=LMLauNPbCz8", category: "撲克", duration: "06:40" },
+            { id: 60, title: "4張J變裝", url: "https://www.youtube.com/watch?v=rT43OlzmrKw", category: "撲克", duration: "05:15" },
+            { id: 61, title: "把牌搓進手機", url: "https://www.youtube.com/watch?v=CVribroN9YI", category: "撲克", duration: "04:10" },
+            { id: 62, title: "搓牌至底下", url: "https://www.youtube.com/watch?v=AgpiGdJTJgI", category: "撲克", duration: "03:25" },
+            { id: 63, title: "搓不見了-搞笑篇", url: "https://www.youtube.com/watch?v=dGqROrx97uk", category: "生活", duration: "01:20" },
+            { id: 64, title: "三疊JQK", url: "https://www.youtube.com/watch?v=ymGcLkVDwbo", category: "撲克", duration: "08:45" },
+            { id: 65, title: "四張A 一個背面顏色不同", url: "https://www.youtube.com/watch?v=XJ_Gl_Y13pA", category: "撲克", duration: "04:50" },
+            { id: 66, title: "八張黑紅交叉變4白", url: "https://www.youtube.com/watch?v=sOmUJ0BGUXo", category: "撲克", duration: "06:10" },
+            { id: 67, title: "二個硬幣移動之一", url: "https://www.youtube.com/watch?v=iVVCXRvJWV0", category: "錢幣", duration: "02:45" },
+            { id: 68, title: "四個硬幣兩兩移動", url: "https://www.youtube.com/watch?v=TV4Xl4QYyHs", category: "錢幣", duration: "04:30" },
+            { id: 69, title: "四個硬幣移動之一", url: "https://www.youtube.com/watch?v=nH-4D2YTXso", category: "錢幣", duration: "03:15" },
+            { id: 70, title: "四個硬幣移動之二", url: "https://www.youtube.com/watch?v=gOx3t2xLfYg", category: "錢幣", duration: "05:10" },
+            { id: 71, title: "四個硬幣移動之三", url: "https://www.youtube.com/watch?v=UZF15yyQ7Sk", category: "錢幣", duration: "04:55" },
+            { id: 72, title: "點一張牌搓不見而入整牌中", url: "https://www.youtube.com/watch?v=-8PCuUN0wEQ", category: "撲克", duration: "03:20" },
+            { id: 73, title: "QKQKAAA", url: "https://www.youtube.com/watch?v=mXu5tn0fuaQ", category: "撲克", duration: "07:10" },
+            { id: 74, title: "KKKK紅AAAA藍", url: "https://www.youtube.com/watch?v=DMx-AKO4o-k", category: "撲克", duration: "06:45" },
+            { id: 77, title: "筆戳破紙鈔", url: "https://www.youtube.com/watch?v=GDLK8m0Lh7I", category: "錢幣", duration: "02:10" },
+            { id: 78, title: "12345翻面54321", url: "https://www.youtube.com/watch?v=U6Ypeektq-A", category: "撲克", duration: "04:55" },
+            { id: 79, title: "2A分別插入牌中4A兩兩在一起", url: "https://youtu.be/FX4B0nP2IJ8", category: "撲克", duration: "05:30" },
+            { id: 80, title: "兩錢幣移動之二", url: "https://youtu.be/XPCCzh3xoOc", category: "錢幣", duration: "03:15" },
+            { id: 82, title: "梅花7紅心7", url: "https://youtu.be/XU8fZDjSYEM", category: "撲克", duration: "02:50" },
+            { id: 83, title: "錢幣於兩張牌下移動", url: "https://youtu.be/C26AElcuin0", category: "錢幣", duration: "04:15" },
+            { id: 84, title: "一個錢幣", url: "https://www.youtube.com/watch?v=mcN4KIeYb6E", category: "錢幣", duration: "01:45" },
+            { id: 85, title: "四張牌一張一張翻過來", url: "https://youtu.be/B_5jmyy2yxc", category: "撲克", duration: "03:55" },
+            { id: 86, title: "牌入紙盒", url: "https://youtu.be/mBPfjO_QWWk", category: "生活", duration: "02:30" },
+            { id: 87, title: "三紙團", url: "https://youtu.be/2NRB9HOWSbY", category: "生活", duration: "04:10" },
+            { id: 88, title: "空中抓幣", url: "https://youtu.be/WzShlK17KVQ", category: "錢幣", duration: "02:20" },
+            { id: 90, title: "乒乓球與骰子", url: "https://youtu.be/2Z7b3ylb5aE", category: "生活", duration: "03:40" },
+            { id: 91, title: "一切牌由心想生", url: "https://youtu.be/pt7YrQcI-4Y", category: "撲克", duration: "06:15" }
+        ];
+
+        // 狀態變數
+        const videoGrid = document.getElementById('videoGrid');
+        const searchInput = document.getElementById('searchInput');
+        const totalCountEl = document.getElementById('totalCount');
+        const favCountHeader = document.getElementById('favCountHeader');
+        const favCountBtn = document.getElementById('favCountBtn');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        let currentFilter = 'all';
+        let favorites = [];
+
+        // 初始化收藏資料
+        function initFavorites() {
+            try {
+                const saved = localStorage.getItem('magic_favorites');
+                favorites = saved ? JSON.parse(saved) : [];
+            } catch (e) {
+                console.error("無法存取 localStorage:", e);
+                favorites = [];
+            }
+        }
+
+        // 解析 YouTube ID
+        function getYoutubeId(url) {
+            let id = '';
+            try {
+                if (url.includes('shorts/')) id = url.split('shorts/')[1].split(/[?#&]/)[0];
+                else if (url.includes('v=')) id = url.split('v=')[1].split(/[&?#]/)[0];
+                else if (url.includes('youtu.be/')) id = url.split('youtu.be/')[1].split(/[?#&]/)[0];
+            } catch (e) {}
+            return id;
+        }
+
+        // 收藏切換
+        function toggleFavorite(e, id) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const idStr = id.toString();
+            const index = favorites.indexOf(idStr);
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(idStr);
+            }
+            
+            saveToStorage();
+            renderCards();
+        }
+
+        // 儲存至本地
+        function saveToStorage() {
+            try {
+                localStorage.setItem('magic_favorites', JSON.stringify(favorites));
+                updateFavStats();
+            } catch (e) {
+                alert("儲存失敗：瀏覽器禁止存取儲存空間。");
+            }
+        }
+
+        // 更新統計
+        function updateFavStats() {
+            favCountHeader.textContent = favorites.length;
+            favCountBtn.textContent = favorites.length;
+        }
+
+        // 匯出備份
+        function exportFavorites() {
+            const code = btoa(JSON.stringify(favorites));
+            const promptMsg = "這是您的收藏代碼，請複製並妥善保存：";
+            window.prompt(promptMsg, code);
+        }
+
+        // 匯入備份
+        function importFavorites() {
+            const code = window.prompt("請輸入匯出時取得的收藏代碼：");
+            if (code) {
+                try {
+                    const imported = JSON.parse(atob(code));
+                    if (Array.isArray(imported)) {
+                        favorites = imported;
+                        saveToStorage();
+                        renderCards();
+                        alert("匯入成功！");
+                    }
+                } catch (e) {
+                    alert("無效的代碼，請檢查是否複製完全。");
+                }
+            }
+        }
+
+        // 渲染卡片
+        function renderCards() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filtered = magicData.filter(item => {
+                const matchesSearch = item.title.toLowerCase().includes(searchTerm) || 
+                                    item.id.toString().includes(searchTerm) ||
+                                    item.category.includes(searchTerm);
+                
+                let matchesFilter = true;
+                if (currentFilter === 'favorites') {
+                    matchesFilter = favorites.includes(item.id.toString());
+                } else if (currentFilter === '未解答') {
+                    matchesFilter = item.unsolved;
+                } else if (currentFilter !== 'all') {
+                    matchesFilter = item.category === currentFilter;
+                }
+                
+                return matchesSearch && matchesFilter;
+            });
+
+            if (filtered.length === 0) {
+                videoGrid.innerHTML = `
+                    <div class="col-span-full py-20 text-center">
+                        <i class="fas fa-folder-open text-5xl text-slate-700 mb-4"></i>
+                        <p class="text-slate-500">找不到符合條件的魔術影片</p>
+                    </div>
+                `;
+            } else {
+                videoGrid.innerHTML = filtered.map(item => {
+                    const videoId = getYoutubeId(item.url);
+                    const isFav = favorites.includes(item.id.toString());
+                    return `
+                        <div class="magic-card bg-slate-800 rounded-3xl overflow-hidden border border-slate-700/50 flex flex-col group">
+                            <a href="${item.url}" target="_blank" class="relative aspect-video block no-underline">
+                                <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div class="youtube-icon-bg w-14 h-14 rounded-full flex items-center justify-center shadow-2xl">
+                                        <i class="fas fa-play text-white text-xl ml-1"></i>
+                                    </div>
+                                </div>
+                                <div class="absolute top-3 left-3 px-3 py-1 bg-slate-900/80 backdrop-blur-md rounded-full text-[10px] font-bold text-blue-400 border border-blue-500/30">
+                                    #${item.id}
+                                </div>
+                                <div class="duration-badge absolute bottom-2 right-2 px-2 py-0.5 rounded text-[11px] font-medium text-white tracking-wider">
+                                    ${item.duration}
+                                </div>
+                                ${item.unsolved ? `<div class="absolute top-3 right-12 px-3 py-1 bg-amber-500 rounded-full text-[10px] font-bold text-slate-950">未解答</div>` : ''}
+                            </a>
+                            <button onclick="toggleFavorite(event, '${item.id}')" class="fav-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-900/80 backdrop-blur-md flex items-center justify-center border border-slate-700 hover:border-rose-500 z-10">
+                                <i class="${isFav ? 'fas fa-heart text-rose-500 scale-110' : 'far fa-heart text-slate-400'}"></i>
+                            </button>
+                            <div class="p-5 flex-grow flex flex-col">
+                                <a href="${item.url}" target="_blank" class="block no-underline">
+                                    <h4 class="text-slate-100 font-bold text-lg mb-3 line-clamp-2 leading-tight group-hover:text-blue-400 transition-colors">${item.title}</h4>
+                                </a>
+                                <div class="mt-auto flex items-center justify-between">
+                                    <span class="text-[10px] font-bold uppercase px-3 py-1 rounded-lg bg-slate-700/50 text-slate-400">${item.category}</span>
+                                    <div class="text-slate-500 flex items-center gap-1.5 text-[10px] font-bold">
+                                        <i class="fab fa-youtube ${item.url.includes('shorts') ? 'text-rose-500' : 'text-red-600'}"></i>
+                                        <span>${item.url.includes('shorts') ? 'SHORTS' : 'VIDEO'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            totalCountEl.textContent = filtered.length;
+        }
+
+        // 事件監聽
+        searchInput.addEventListener('input', renderCards);
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.category;
+                renderCards();
+            });
+        });
+
+        // 啟動程序
+        window.onload = () => {
+            initFavorites();
+            updateFavStats();
+            renderCards();
+        };
+    </script>
+</body>
+</html>
