@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JDJ AI 頻道 - Video Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 引入 Google Fonts: Noto Sans TC (思源黑體) */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', "Microsoft JhengHei", "Apple LiGothic Medium", sans-serif;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: scale(1.05) translateY(-5px);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(45, 212, 191, 0.5);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            background-color: #000;
+            display: block;
+        }
+
+        .pagination-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: #2dd4bf;
+            color: #000;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .active-page {
+            background: #2dd4bf;
+            color: #000;
+        }
+        
+        .card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        /* 左側 Logo 圖片樣式 (保持圓形) */
+        .logo-img-left {
+            height: 52px;
+            width: 52px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid rgba(45, 212, 191, 0.6);
+            box-shadow: 0 0 15px rgba(45, 212, 191, 0.3);
+            background-color: white;
+        }
+
+        /* 右側方形印章樣式 */
+        .logo-img-stamp {
+            height: 24px; /* 尺寸縮小 */
+            width: 24px;
+            object-fit: cover;
+            border-radius: 2px; /* 幾乎純方，僅微量圓角增加質感 */
+            background-color: white;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 6px; /* 對齊文字底線 */
+        }
+        
+        .logo-container {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .logo-container:hover {
+            transform: rotate(15deg) scale(1.15);
+        }
+
+        /* 印章點擊特效 */
+        .logo-container-right:hover {
+            transform: scale(1.1) translateY(-2px);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="max-w-7xl mx-auto mb-12">
+        <div class="flex flex-col items-center justify-center gap-4">
+            <!-- 組合標題：使用了 items-end 讓內容對齊底部 -->
+            <div class="flex items-end justify-center gap-3 bg-white/5 px-6 py-3 rounded-full border border-white/10 shadow-2xl backdrop-blur-md">
+                <!-- 左側圖片 (保持垂直置中對齊) -->
+                <div class="flex-shrink-0 logo-container self-center">
+                    <img src="https://drive.google.com/thumbnail?id=1A_SFA2uYs_YZDs830iBN-SilpnqWJ-ZT&sz=w150" 
+                         alt="JDJ Logo Left" 
+                         class="logo-img-left"
+                         onerror="this.src='https://drive.google.com/uc?export=view&id=1A_SFA2uYs_YZDs830iBN-SilpnqWJ-ZT'">
+                </div>
+                
+                <!-- 標題文字 -->
+                <h1 class="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-blue-400 to-purple-500 leading-none">
+                    JDJ AI 頻道
+                </h1>
+
+                <!-- 右側圖片 (改為方形小印章且對齊下方) -->
+                <div class="flex-shrink-0 logo-container logo-container-right">
+                    <img src="https://drive.google.com/thumbnail?id=1Cjh7TqL1QPqufsldJgmA_w8J00eks2kP&sz=w150" 
+                         alt="JDJ Stamp" 
+                         class="logo-img-stamp"
+                         onerror="this.src='https://drive.google.com/uc?export=view&id=1Cjh7TqL1QPqufsldJgmA_w8J00eks2kP'">
+                </div>
+            </div>
+            <p class="text-gray-400 italic font-light tracking-widest uppercase">Future Media Insight Hub</p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto">
+        <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12"></div>
+
+        <div class="flex flex-col items-center gap-6 mt-12">
+            <div class="flex justify-center items-center gap-4">
+                <button id="prev-btn" class="pagination-btn"><i class="fas fa-chevron-left mr-2"></i> 上一頁</button>
+                <div id="page-numbers" class="flex gap-2"></div>
+                <button id="next-btn" class="pagination-btn">下一頁 <i class="fas fa-chevron-right ml-2"></i></button>
+            </div>
+            <p class="text-xs text-gray-500 opacity-60 italic text-center">
+                提示：點擊卡片將在分頁中開啟 Google Drive 播放器。
+            </p>
+        </div>
+    </main>
+
+    <script>
+        const rawData = [
+            { id: 1, title: "外賣小哥", url: "https://drive.google.com/file/d/1E6_jdJsL3HwU-N-JF4SkFeUAoHAgtMfO/view?usp=drivesdk", thumbId: "1LXnRPc6y4jBpImMAOWmjbw8WRyQvPN8O" },
+            { id: 2, title: "同性戀", url: "https://drive.google.com/file/d/1M19M21RjtikT1b8urS--px4m9UeuKdvh/view?usp=drivesdk", thumbId: "16CBb83N1LdILizXPUYU6T7xWyaZpTEN1" },
+            { id: 3, title: "日月潭攻略", url: "https://drive.google.com/file/d/1xmID__rsIvW4NE9NqQTsx1VL2gqpSfma/view?usp=drivesdk", thumbId: "1a-fCBCPl3eAzUZRdKdNbxACm0c4VioKP" },
+            { id: 4, title: "關門大弟子", url: "https://drive.google.com/file/d/1Z0JfqcwKvUcdhDBq3pMNsUlzCVtZ1VSm/view?usp=drivesdk", thumbId: "1AiB_ZIEjtCKnxdG9Y5HGhXYDjNLF-ZjQ" },
+            { id: 5, title: "秦始皇-十八層地獄", url: "https://drive.google.com/file/d/17CF4yC-bPbhpLZNgt3JsRY12p5iwleeY/view?usp=drivesdk", thumbId: "1WzlSHe49StAME6eWRskcMb6O1ka8IS1k" },
+            { id: 6, title: "糊塗老醫師-量好了沒", url: "https://drive.google.com/file/d/16k8NEfVsloTKKbNusVvumAiRnfScio4B/view?usp=drivesdk", thumbId: "1eJejgTLIpEthyIT8YpTAeywIchBcsSz8" },
+            { id: 7, title: "與好友出遊", url: "https://drive.google.com/file/d/1mQDceLM4fM_ou1Zyv8ZYpxqY8KkFfhzZ/view?usp=drivesdk", thumbId: "1-yMdVwQiz52zyoikmnBByt9azjAwADh3" },
+            { id: 8, title: "動物園-猩猩語言", url: "https://drive.google.com/file/d/1MPipA7Evyd-6hDSchT61nrWneciFzsJ8/view?usp=drivesdk", thumbId: "1ECtcqXT9oeyShNtlC7xGnBy70HWIdUry" },
+            { id: 9, title: "飛機故障", url: "https://drive.google.com/file/d/15I9VguSkmGtFO8zRVe_Dn5JNtBwAW50y/view?usp=drivesdk", thumbId: "19wV9RDASE7p4-nwybQfuNPBTJqfyST6Y" },
+            { id: 10, title: "關你鳥事", url: "https://drive.google.com/file/d/1PfR0Lre4XtW6LJiZYcTEPLAlO8BGi1v_/view?usp=drivesdk", thumbId: "11--JTduZsjgMbz9hQ_g3WgaYAtzN2_HX" },
+            { id: 11, title: "修理玩具", url: "https://drive.google.com/file/d/13Nl4n1yQOC4VjK4xpjJpYtBTW1wO5_5G/view?usp=drivesdk", thumbId: "1o646ZmcbucJC7jZSDG-xStcE7bHKAUn4" },
+            { id: 12, title: "我的家人-公仔集", url: "https://drive.google.com/file/d/1ulGICsXHCJkX_pE6PnZvg1W3lqvacKup/view?usp=drivesdk", thumbId: "1F2wbDAYFFR4jUP5GXCoLXVG74J-IZrEh" },
+            { id: 13, title: "這杯子是濤保買的", url: "https://drive.google.com/file/d/1i7HiHmv7fxPqIBCP_sKcVvRHbik2mBW-/view?usp=drivesdk", thumbId: "1QUQcDIOFhXHAvYCOG9r65u6tr2KdJPLq" },
+            { id: 14, title: "禪宗公案-磨磚做鏡", url: "https://drive.google.com/file/d/1ImM_UeO5zh6yrvn3Ajx4kyOFkunmJdty/view?usp=drivesdk", thumbId: "1HQUwLjfg4EbDfEywqM2KupEH59HUGUmx" },
+            { id: 15, title: "買魩仔魚", url: "https://drive.google.com/file/d/12OgbmL96XlGyqsMEj5oDPQmrjDValIt5/view?usp=drivesdk", thumbId: "1W7yYg-fxhMsouUXBms0RJBtxayHWTKA" },
+            { id: 16, title: "外甥女-迪士尼打工", url: "https://drive.google.com/file/d/17vNMRFxzkIK3ZXKdHgDob0M1M4aeXNf-/view?usp=drivesdk", thumbId: "1JOZd3oDJsH7QgXfgChsaw7_ml44wBaLg" },
+            { id: 17, title: "網紅-老奶奶-蹲馬桶", url: "https://drive.google.com/file/d/1VEkZOpzBYN8yLXp94rAm2I7gsJMAf33S/view?usp=drivesdk", thumbId: "1eomBDtLAxBQsDp_zESGfYQ_myDdeZ91I" },
+            { id: 18, title: "戰地記者", url: "https://drive.google.com/file/d/10LYljSAbXpS2hqPBU-FYMjlko8ZyqfoI/view?usp=drivesdk", thumbId: "1oO2ErdCObGpNuV60Gz1gJ-M7N0VGzEJF" },
+            { id: 19, title: "羽球冠亞軍", url: "https://drive.google.com/file/d/13aZ4ek35VOe8mNBZztYgs6xORlGsUlZ-/view?usp=drivesdk", thumbId: "1Ajk8KoIF06AxNDn27HhzNn3gq9iBqOsQ" },
+            { id: 20, title: "當兵 - 想上一號", url: "https://drive.google.com/file/d/1dxgrcaUO_sA6zjCy_DCpY2KrzcJeuli_/view?usp=drivesdk", thumbId: "1xkNYPlMetF1eFBqbUBL5Jwai4ME5N5hs" },
+            { id: 21, title: "四格漫畫-貓", url: "https://drive.google.com/file/d/13Kin6YtBH2IShIXQA1yz632bHN6R73p4/view?usp=drivesdk", thumbId: "1z28bik7WwJwi3Gym2k7i3ttthJGcdr-b" },
+            { id: 22, title: "四格漫畫-考試", url: "https://drive.google.com/file/d/1raIsC1PPfOeRf-Mn-o7xmhuNsRljy866/view?usp=drivesdk", thumbId: "1zQ67qLe41JC9QWoB9Ad48L44C_-C4NBE" }
+        ];
+
+        function getDriveThumbnail(id) {
+            return `https://drive.google.com/thumbnail?id=${id}&sz=w640`;
+        }
+
+        const itemsPerPage = 8;
+        let currentPage = 1;
+        const totalPages = Math.ceil(rawData.length / itemsPerPage);
+
+        function renderVideos() {
+            const grid = document.getElementById('video-grid');
+            grid.innerHTML = '';
+            const start = (currentPage - 1) * itemsPerPage;
+            const pageData = rawData.slice(start, start + itemsPerPage);
+
+            pageData.forEach(video => {
+                const cardWrapper = document.createElement('a');
+                cardWrapper.href = video.url;
+                cardWrapper.target = "_blank";
+                cardWrapper.className = 'card-link';
+                
+                const primaryThumb = getDriveThumbnail(video.thumbId);
+                const secondaryThumb = `https://drive.google.com/uc?export=view&id=${video.thumbId}`;
+
+                cardWrapper.innerHTML = `
+                    <div class="glass-card group">
+                        <div class="relative overflow-hidden bg-black">
+                            <img src="${primaryThumb}" 
+                                 alt="${video.title}" 
+                                 class="video-thumbnail transition-transform duration-500 group-hover:scale-110"
+                                 onerror="this.onerror=null; this.src='${secondaryThumb}';">
+                            <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div class="bg-teal-500/90 p-4 rounded-full shadow-2xl transform transition-transform group-hover:scale-110">
+                                    <i class="fas fa-play text-2xl text-white ml-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5 flex-grow">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-teal-400 border border-teal-400/30 px-2 py-0.5 rounded">${video.id}</span>
+                                <h3 class="font-bold text-lg text-gray-100 truncate">${video.title}</h3>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(cardWrapper);
+            });
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const pageNumbers = document.getElementById('page-numbers');
+            pageNumbers.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.className = `w-10 h-10 rounded-full font-bold transition-all ${i === currentPage ? 'active-page' : 'hover:bg-white/10'}`;
+                btn.onclick = (e) => { 
+                    e.preventDefault();
+                    currentPage = i; 
+                    renderVideos(); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                };
+                pageNumbers.appendChild(btn);
+            }
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage === totalPages;
+        }
+
+        document.getElementById('prev-btn').onclick = () => { if (currentPage > 1) { currentPage--; renderVideos(); } };
+        document.getElementById('next-btn').onclick = () => { if (currentPage < totalPages) { currentPage++; renderVideos(); } };
+
+        window.onload = renderVideos;
+    </script>
+</body>
+</html>
