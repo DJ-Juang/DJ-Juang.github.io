@@ -21,7 +21,7 @@
             <img src="https://lh3.googleusercontent.com/d/1IUW5Uq5M8pgTfMX6zE58J7gUcs1Wo6fo" alt="Left Icon" class="w-12 h-12 rounded-full shadow-sm object-cover">
             <div class="text-center">
                 <h1 class="text-3xl font-bold text-slate-800 mb-2">JDJ 的相片館</h1>
-                <p class="text-slate-500">已載入 209 筆完整資料</p>
+  //              <p class="text-slate-500">已載入 209 筆完整資料</p>
             </div>
             <img src="https://lh3.googleusercontent.com/d/1Cjh7TqL1QPqufsldJgmA_w8J00eks2kP" alt="Right Icon" class="w-12 h-12 rounded-full shadow-sm object-cover">
         </header>
@@ -378,8 +378,8 @@
             container.appendChild(createBtn('«', 1, false, currentPage === 1));
             
             let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+            let endPage = Math.min(totalPages, startPage + 10);
+            if (endPage - startPage < 10) startPage = Math.max(1, endPage - 10);
 
             for (let i = startPage; i <= endPage; i++) {
                 container.appendChild(createBtn(i, i, i === currentPage));
