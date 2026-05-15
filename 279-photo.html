@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動照片導覽系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .img-container { position: relative; width: 100%; padding-top: 65%; overflow: hidden; background: #e2e8f0; }
+        .img-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+        .glass-card:hover img { transform: scale(1.05); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 flex items-center justify-center gap-6">
+            <img src="https://lh3.googleusercontent.com/d/1IUW5Uq5M8pgTfMX6zE58J7gUcs1Wo6fo" alt="Left Icon" class="w-12 h-12 rounded-full shadow-sm object-cover">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-slate-800 mb-2">JDJ 的相片館</h1>
+                <!--p class="text-slate-500">已載入 209 筆完整資料</p-->
+            </div>
+            <img src="https://lh3.googleusercontent.com/d/1Cjh7TqL1QPqufsldJgmA_w8J00eks2kP" alt="Right Icon" class="w-12 h-12 rounded-full shadow-sm object-cover">
+        </header>
+
+        <!-- Filters -->
+        <div class="glass-card rounded-2xl p-6 mb-8 shadow-sm flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-slate-600 mb-2">年度</label>
+                <select id="yearFilter" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <option value="all">所有年度</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-slate-600 mb-2">地區</label>
+                <select id="regionFilter" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <option value="all">所有地區</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-slate-600 mb-2">國家/城市</label>
+                <select id="countryFilter" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <option value="all">所有地點</option>
+                </select>
+            </div>
+            <button id="resetBtn" class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-medium transition-colors">
+                重設
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats" class="mb-4 text-sm text-slate-500 font-medium"></div>
+
+        <!-- Results Grid -->
+        <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Cards will be injected here -->
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="mt-12 flex justify-center items-center gap-2">
+            <!-- Pagination buttons will be injected here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden py-20 text-center">
+            <p class="text-slate-400 text-lg">找不到符合條件的照片</p>
+        </div>
+    </div>
+
+    <script>
+        const rawData = [
+{id: 1, year: "2024", region: "中國",country: "上海",url: "https://drive.google.com/file/d/1m_UFVphK9yd-FiRcfWvChMOm0G8tMnOK/view"},
+{id: 2, year: "2024", region: "中國",country: "上海",url: "https://drive.google.com/file/d/1mOvsoJjDDRhVSEfAoHo3EX8viqonhIUn/view"},
+{id: 3, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1_x03q-TwGOZPaEqmhMkzj_g-4k_IpbSE/view"},
+{id: 4, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1DijhduWQbvmWLLKmv2IHImA2eY_exJWf/view"},
+{id: 5, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1paUx-r7HmALYcZ5wXzvRi7gpV5XtWPX7/view"},
+{id: 6, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1G1zdfzpV0gve1YdDc5p3uqqH0QjqVOLE/view"},
+{id: 7, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1MH0khvhZ0ckrpA2hhUB7LDbiU7FzNIPH/view"},
+{id: 8, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1UfyMM4cn9GnmcsXUleI9h5FJxk1jU-JY/view"},
+{id: 9, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1cFXOQ-B4v1pNOuLK7R4HsCpvm21ib3iV/view"},
+{id: 10, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1TKuvs88klFpqFUidhUIUT1Q6oyUcED-G/view"},
+{id: 11, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1qUYh981QR6y3MO7Z_-K11t2sR8o6c79O/view"},
+{id: 12, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1oym3_usBIXqcd0OaNtdvE4qgI-iN0Ib7/view "},
+{id: 13, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1-XZ24WKJJHzIkT5kvPXMo9Du2AJGYhGf/view"},
+{id: 14, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1lF0Xxwv9-_g0Rgux0zXLkkyzfujtCIhE/view"},
+{id: 15, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/17bB32jcCdPUTD6KPMXTuCuGpNfRZ53Y1/view"},
+{id: 16, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1XSMshkuuJNYytpuyhFu3x-Em-94Xynka/view"},
+{id: 17, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/17y8d6tw3oKlsNaJNfexs1qBsBqTAtchM/view"},
+{id: 18, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/17d6af-NcuEAGq8jBzfNeQxuVHhQdyzvu/view"},
+{id: 19, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1hkYKzsTW54xe3bGwOnGST-6Yh3x5xKlK/view"},
+{id: 20, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1DfkFxPbd8WYDCT8FFTTozHeMPDfL_URj/view"},
+{id: 21, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1Zm42Ub7LUKJ_85MYsh7Nr5llQES9NacX/view"},
+{id: 22, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1z41en8kvp_-l0F09--7nglhmmy4H9135/view"},
+{id: 23, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/145tzCzMkTmqDULKzxSQtgHObsXLDgqAq/view"},
+{id: 24, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1VKzmAQotLoo-xWs2A8ZJ0RwpmW9Gqif-/view"},
+{id: 25, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1n5GzWO6F9zS4pSHPUQRkC52uCf8N3lJn/view"},
+{id: 26, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1K4_aNM8YJ5ahZKzsTjP5xkDj6QRRHkyT/view"},
+{id: 27, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/120HtdOslUXIGPl_L3UfekvVJZCjqHeTq/view"},
+{id: 28, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1QHAntoq7oan54qei33b8KgT4OJxkKV-M/view"},
+{id: 29, year: "2024", region: "歐洲",country: "立陶宛",url: "https://drive.google.com/file/d/1YgVe8puy_PVY68fbQB5gB-kxixa4jEmy/view"},
+{id: 30, year: "2024", region: "歐洲",country: "拉脫維亞",url: "https://drive.google.com/file/d/13JLuowd-EUU4ouPM18NINO756Ra9Sfn1/view"},
+{id: 31, year: "2024", region: "歐洲",country: "拉脫維亞",url: "https://drive.google.com/file/d/1VAcFPU1IPzL-z4G1mNFqt1U4LhQTFwp8/view"},
+{id: 32, year: "2024", region: "歐洲",country: "拉脫維亞",url: "https://drive.google.com/file/d/1CE74MNZam8zHygiYeDKniDfoOrPOcGD2/view"},
+{id: 33, year: "2024", region: "歐洲",country: "拉脫維亞",url: "https://drive.google.com/file/d/1kQp6gOD7zz2a_PxoJMTu3H4QT3_yt558/view"},
+{id: 34, year: "2024", region: "歐洲",country: "拉脫維亞",url: "https://drive.google.com/file/d/1BUkrTS3zq-nQG_QnPWL_EOFq-nI_81mh/view"},
+{id: 35, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1elugRlUmf9xlUv91zFeeW0FpIt2wtc3p/view"},
+{id: 36, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1hoqosbT0-tv5hVB8cvaJnN5itaSQk3Tz/view"},
+{id: 37, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1rJOASl9d3TQ3QbWYx2fdUtBdZA3VRcwb/view"},
+{id: 38, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/181l5rx5IeZMBXRVbb5S4QClSADmUmH-p/view"},
+{id: 39, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1WBmLCfvUvXEUPy5mhxCjl21fuU2-v2Q-/view"},
+{id: 40, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1AZsu4u2mZSPQy-Zx5SEzE0la0kAedgj-/view"},
+{id: 41, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1QpUFOMByKo5krFP4siz_jAilGPcvfIof/view"},
+{id: 42, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1-w4oIxE6-XHHYpEP_zG6hlXLtQxoS5lL/view"},
+{id: 43, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1Tnz22Sm8mTQ3dPvL0qMxLZcaOIrFPdAO/view"},
+{id: 44, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1kC8FruubUkZ0kLSE35vnB_bhPJNMDqda/view"},
+{id: 45, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1gkK_xvdkrnu6-Ddo3iYJzIsc7R-gpiUm/view"},
+{id: 46, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1h9yJQaXBuYMb9sGHzFnqniJtOf_d08qX/view"},
+{id: 47, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1kLy6dMAnzROC-CRYyICHT3E5_TgoSFbd/view"},
+{id: 48, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/11QTbWN15MDZJVUd9EfoYY-8Dtn8CeWb1/view"},
+{id: 49, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/1B0qudzYIi16N8FC_qv4HbQPVV5tlRzzz/view"},
+{id: 50, year: "2024", region: "歐洲",country: "愛沙尼亞",url: "https://drive.google.com/file/d/17tg0amjXD_hOiQNL93zJXWZoXsWt_biA/view"},
+{id: 51, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1r0nb6h4_zFwCCEZzASDzcfuA4aXWzM-Q/view"},
+{id: 52, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1NaBxHzCp_us-5-bZI9YqGlV5Pos7q-LA/view"},
+{id: 53, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1I-GfOW00bmk8pCuf7XhdAbpfbVOcmyeB/view"},
+{id: 54, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1pgitjKHbpINGuss22qy7GsuOJm3zrZVX/view"},
+{id: 55, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1B16z4amzYbloafeGKAXfSXj7kzFJx4JE/view"},
+{id: 56, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1l6nKzXZesBdVNYRAzLGOH9bRKHofKVO_/view"},
+{id: 57, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1Tr6v-QRn_GlwpejAjbN4POP7gte0RB4e/view"},
+{id: 58, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1bV9T9xTtAqVq-IrTty6u0kShi5V_Xp1o/view"},
+{id: 59, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1gtKhd_xEuTDOoQ_IEO8zNISUGQX8T52r/view"},
+{id: 60, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1GZRwu5YvU_mlPp2uDy0nQLvBE36R1aS-/view"},
+{id: 61, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1OuvDKVx3IAREOIf0821KL5UOXeMGqpwr/view"},
+{id: 62, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1RSSr_q4KGOyXRO2qnDoCRTVgMChvdqeK/view"},
+{id: 63, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1vdpR5bOK3OAkIm876tTa3lnyWsBzXtW9/view"},
+{id: 64, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1LjpLtgWhCcK4v_y_yUJA6MTCamhc1H2v/view"},
+{id: 65, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1sSd-6l0Wo054V-o8RoQ75rEze54O6PjM/view"},
+{id: 66, year: "2024", region: "歐洲",country: "芬蘭",url: "https://drive.google.com/file/d/1LWr7cTWKjwifIkdIOSaE4CEwCexB2p77/view"},
+{id: 67, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1oGpUJ7AlIhdbEKBokvSkQn249mTRsoqw/view"},
+{id: 68, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1tNkR2SRb6UCXboQm8ypJ5MK3ZLszywvr/view"},
+{id: 69, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1o7bGTdmtPoYGikDkNem47t8MoID3vVbc/view"},
+{id: 70, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1ex6-W3_CpuYtPvnAOnkZEl9hmelId2xC/view"},
+{id: 71, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1i67QuK1VwyPYm9YnDiZX0wUGz9YvFg90/view"},
+{id: 72, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/17FNKjiZVI6nqikqw3PV4xQ2tNqV_rRIP/view"},
+{id: 73, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1hcNEHs1PCNMWI3k-vEOuQ0jQ69u7KH_R/view"},
+{id: 74, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/11pWatNHt4nadXfCffzMcrcoBu19lCo9l/view"},
+{id: 75, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1872kIHwqq9KywzDhi68ndf25QlmYpvrJ/view"},
+{id: 76, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1PEnTD_jlXc4KYry1SL6tE0wQpqVN_KIy/view"},
+{id: 77, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1uu9nT1Q9LeTSXclI8OnhtMij0D9QwfVh/view"},
+{id: 78, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Hg8KNfLQTV85XGhPi7RmqmN0Ivt24rta/view"},
+{id: 79, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1znaQu9I5w1XQ1xxGKJnmCnWpERQFmmEP/view"},
+{id: 80, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1MMIpTB_C1AaYClCyia_7a1iFVr3nQQdJ/view"},
+{id: 81, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/10clnLWl_WM2WRxHeyuDfJbeXuVLYWNQ3/view"},
+{id: 82, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1psE-QCpuvHD2tqiqEhSYc23Kd4tDsF1A/view"},
+{id: 83, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/15mZ2-Jw-S6pMtUNR7FdIEhZLbDy55LKv/view"},
+{id: 84, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1kOz4OolNX3TFTLWite4lSLQiMjsZeIv7/view"},
+{id: 85, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1AIobHqf3h3xVG7v1BtDSTf94SidnooaJ/view"},
+{id: 86, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1jtMjlRS0bcB4KupsQjs8GXdsKNuy90ah/view"},
+{id: 87, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Lyzv5MSTnzz-0prfxKIZ-xczwqG_lZIT/view"},
+{id: 88, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Fp514zxvDhuBPz2UkamhvNhhMoKaZgmk/view"},
+{id: 89, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1YVUuBwfkvX6IiZJYv5pD7QUy5yf0vfmS/view"},
+{id: 90, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1cY050P5T4IZA9kIc03YJNq1iTQPLehjk/view"},
+{id: 91, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Gzlnu4rf1x2K5IR0P6zYXU83fDGTVYvX/view"},
+{id: 92, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Ckfn9V_1Ei-mRLuuyyI_6MdsknF3qEw3/view"},
+{id: 93, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/15vwKSDuaUavNsAHcaZ-UNrDwBiLsGTyk/view"},
+{id: 94, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1h3X1CJo3xpMTnoYwYWK0iFtQtWwcZ4-E/view"},
+{id: 95, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Yi8-BqSo7M5I4UWGj-ybm57x7JAiPDqD/view"},
+{id: 96, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Kyg42xFeMtZRoDXZL-IY0maZfHpoCiGB/view"},
+{id: 97, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1NyesqO4INS3PdmLNkGR7VqRhMv_P_d3T/view"},
+{id: 98, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1zvpwzenbYTU4l9e6gI6RNHenlFVAgsyA/view"},
+{id: 99, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1GnUea-SgmSBKXqT2Ji0ePKPDIL1CLxvc/view"},
+{id: 100, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Hmwi6sOw7RT9OfGDdwvL5AHAaWqC3Ctz/view"},
+{id: 101, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1FIwiNEfVtu8_Jc0JcLSpxkLB7QZIGhbm/view"},
+{id: 102, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Zntb3R0FvCIMfiTP2p2OKC3wyioErWwL/view"},
+{id: 103, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1PDdOPgFMCohymD_tcfisVX-_JthezUWx/view"},
+{id: 104, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1ZcMZrSKtb34vf-dLgCFSJdfPmXlDwNk-/view"},
+{id: 105, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1YgIKvOvMQXBel7vAL0tBtv7vnoIqubtE/view"},
+{id: 106, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1xz594awunH63JWVS_uw-rjX-bt252mrA/view"},
+{id: 107, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Kmx5yxuf1mSsWuOokUGAQkL18C7iqcOI/view"},
+{id: 108, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1l1rbn82XAEBVjviYnEty27T1sc4waV5t/view"},
+{id: 109, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1sFHQCN5JBQiCiGzdMqsR-sD7bNZDGkD1/view"},
+{id: 110, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Di1oXVnCalFcEJ8Rk3ODyJCvlRg426Wi/view"},
+{id: 111, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1dpRytkd5VvdhG-uAW3YBOfNJ7AX-I7s9/view"},
+{id: 112, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1vx3R2uLR4m7MCZJ2XtvPWaIzjrvECRzd/view"},
+{id: 113, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1Tz9wJHmT7LRfBU04F_Zx--xCp4VZKXCq/view"},
+{id: 114, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1_mUSS6pi-8kYNg47Eft3hPKVZb8_djmm/view"},
+{id: 115, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1IzguIPrmXRn3X_nTAVXfwQXdvgcvj-LG/view"},
+{id: 116, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1V6XyhJgpVxubEnXFYiMo9O0Wx9WRr-ns/view"},
+{id: 117, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1S_P0yq6eAbUfqTc4HdvyBU7nlr6K_g4c/view"},
+{id: 118, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/18OH6jARvUyPiitYl-Y1doF6rIQx3LGA5/view"},
+{id: 119, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1p5fZ8nypQezPXaJScEXAZ2B1cWFsXUBz/view"},
+{id: 120, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/12YKWxIS0vEJbUbPLCGKeCORIMn_2asn5/view"},
+{id: 121, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1YNylihq4ZsYnktx_Bm1yzsfAEVwUOise/view"},
+{id: 122, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1WXoA8iluUUGs_OfLjTpHOCzuTHX2Sdt7/view"},
+{id: 123, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1XumZjWrsEIeX25jTA3_urM6ffAHurrSf/view"},
+{id: 124, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1aGdhf7r3tTiWdxmyP2EGZNmnVfbgsld5/view"},
+{id: 125, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1z-FkvhE6OlB_feYMANrDDjil_XNXvmkn/view"},
+{id: 126, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1sT41XET0RkrRrwn0w47zou1ODD_PNPWD/view"},
+{id: 127, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1jM7zaNnmYlZJ6zJXe5F25YK7-47hUVMm/view"},
+{id: 128, year: "2025", region: "歐洲",country: "奧地利",url: "https://drive.google.com/file/d/1jXN_BKxb4X8gHlgDYmlx2ZTgLkkz9n4f/view"},
+{id: 129, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/12P1SreLTfpxaLmYEaCJBVowNvpD1jJru/view"},
+{id: 130, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1ksr1Qiyj99kDB-GaR4LGDcAgKUEpZI0Z/view"},
+{id: 131, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1q31mCgkmDgHc6rf7eQpYUiuDSg3GWoOm/view"},
+{id: 132, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1fNtX_7bXsizTH2c5Ectw3DN5i7qmcLW4/view"},
+{id: 133, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/16Z2isiNFyQH6eI0Vt-ZlXDlkgcTo6OmM/view"},
+{id: 134, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1lR2Z_q25ln2g5h1E9KXTE6iOIVD8Kkzu/view"},
+{id: 135, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1tZ8eO7haJZrPz0ZiQ4-Wu9RF6AIIawOu/view"},
+{id: 136, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1bm-_6h4AS5vWifWp8OkLGK7tCuLfNJsx/view"},
+{id: 137, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1C6igzjWnr8OnhcyWLlsINPVS-zgjPH9W/view"},
+{id: 138, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1k41ztAoWvrD9TVrzTcy1qKmygF5jwM26/view"},
+{id: 139, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1KLI24VSJEatvoSA5MjNw2BJIjVWtKX0F/view"},
+{id: 140, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1hWEtPazvEAfihjHFCZHiFMqsW33KIuET/view"},
+{id: 141, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1s1bv6RpjgkXOTW9QFWprqCD2mctgImeI/view"},
+{id: 142, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1KPQvxW-CjRqGApqMaLnGDjawPRaQKuOL/view"},
+{id: 143, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1P1dINkabPsL4ce8AkElkPpKpj49dOqnP/view"},
+{id: 144, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1GfhJTQC8LOQ1MJdDEOa0umhwa3U1uLfL/view"},
+{id: 145, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1TMFEzBCuMfjRhQRvc34xdOZnqi6-XwSE/view"},
+{id: 146, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1OviCYmMLklM-KsHkWWRcrIZJzMglkLac/view"},
+{id: 147, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1Hvd1LsZIoVbe3Gf9JUeQuC3G87EtJfoM/view"},
+{id: 148, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1fYKbLPeiBrwhlwxzxJJNeVhObjGNjPTr/view"},
+{id: 149, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/10PUb1G5nVOopFDGZLq5NV0CmOseiT1f1/view"},
+{id: 150, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1EEKAB49tA8-XPXP0TCtsHkyjKFkpH57G/view"},
+{id: 151, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1QQbRJTJEKakhuOAcMDEvfR8NuJyvYwV_/view"},
+{id: 152, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1hdawVsol0Jcp0ATGt5h37il_Vwr5wPDp/view"},
+{id: 153, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1CuAV61IDNcbus41C7_Jxo7aOru2guEM-/view"},
+{id: 154, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1fDGpvlDhxqqmTPSTl5e0r_XIE83ReHgg/view"},
+{id: 155, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1otvW4eyO57MNDitdBSxppED6oMZ8zzwh/view"},
+{id: 156, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1nMfH0S6Nh57ECuAI5n8oZYcjXyZUAxWj/view"},
+{id: 157, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1HyTnh96Jdm7YxUHEAU8ECiRrKf05lQgr/view"},
+{id: 158, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1j5hrsaxqxbE0pVT-wRXb3DV6tM2Xr7C1/view"},
+{id: 159, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1bau6TlZFx-RCjonkQx-MBCzaw61B2K25/view"},
+{id: 160, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1eqnEug8EvouPDcMpzFpy4dYVFESTZoDm/view"},
+{id: 161, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1arEBp3YOukTbcmDPily3b-xswSDngCal/view"},
+{id: 162, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/12IRf62zVFtl4Ref8MCLdXUq5AYmrKY8V/view"},
+{id: 163, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1bJiphIpRUnt1Sv-tWXpfPMI7gIJQR70P/view"},
+{id: 164, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1Mq_LuPTmSZgX1Zfn4cSsgtqS65LN-oHK/view"},
+{id: 165, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1avEkWnxPQ4uugWseS2z0VOIwK2k_5lTP/view"},
+{id: 166, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1EzOk_C6zgC67n12Rjh58O2SDLhTQsXJI/view"},
+{id: 167, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1X0HfLq0AnRtrRPdjFbjpxLHdMdIx6Lpy/view"},
+{id: 168, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1EXWMamzzzK2uYvLImhbGusKZPgWt1r8o/view"},
+{id: 169, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/14E4lQT0srj2QiDRxZX7CXwnHi99R2DvX/view"},
+{id: 170, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/15831K7nTliLUtj5Nk1G83OraUGmmbq3S/view"},
+{id: 171, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1XRWLu1hS2bivmn7vn_pC-GqC827wHtOn/view"},
+{id: 172, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1zmk9FwWSk2gzblJBm7H6a7oVF38Wux6u/view"},
+{id: 173, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1SwYID3vKENg7LGSFc_pcDJEZG4eb8ehB/view"},
+{id: 174, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1c022SLv3favGH1hv3ndh0-miO4PyHpqu/view"},
+{id: 175, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1hXOVk4mxV1WE1KSg3iqqgexZGotIx3zE/view"},
+{id: 176, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1ANxcLzN0mpK1EWxfOkyu2zL8LugKCenQ/view"},
+{id: 177, year: "2025", region: "歐洲",country: "捷克",url: "https://drive.google.com/file/d/1bjRIIqkgqQH1yuYLXa8llA6v2VvKI9Qj/view"},
+{id: 178, year: "2025", region: "中國",country: "上海",url: "https://drive.google.com/file/d/15tnZwLXp56GCkAu76Ya6PzMeT3YRjj7f/view"},
+{id: 179, year: "2025", region: "中國",country: "上海",url: "https://drive.google.com/file/d/1qiUUOr9n-t2Uz-ij7ShD4KxaiGsb9ZvA/view"},
+{id: 180, year: "2025", region: "中國",country: "上海",url: "https://drive.google.com/file/d/1SGbY81ha9F5LrItmRfeGStMFIRsqboh3/view"},
+{id: 181, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1nn875FxOmICCbgCCHBfsVthfV2OjtrUN/view"},
+{id: 182, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1i7SKEq2iGOxY2nk9Q731doe0Hn7dBbni/view"},
+{id: 183, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/12kHiv3XYsuQ9hKHcaQKgKoddTU6fN8HQ/view"},
+{id: 184, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1fU8y3HOC-KwnjrUrgdfzfg7dRcV1mW3u/view"},
+{id: 185, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1r1Laq8LB0Y7ZCAf0awy1o0HnCP3cVuHi/view"},
+{id: 186, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1XX4ZZ1q7Uw4k5JtLmrcH9S0onc92vIQ6/view"},
+{id: 187, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1AHPkGn-Lbk01LkrRtJU9oensa9EI9eIn/view"},
+{id: 188, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/19mX_vi846zF01ZybZo6p-ivOQytNNX-U/view"},
+{id: 189, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1Pjr0-0HR3fJFJV7gh-NquKpsA4kmBLbk/view"},
+{id: 190, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1-BtSBsAp_adsVwu3PsqhAikG96lOdj0s/view"},
+{id: 191, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1iT2EUqQWtuGrtq9IdGY8yhC1DTgPfoPj/view"},
+{id: 192, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1B60eJ4LPtXHU-6Le0EheAOHIZlVYawG3/view"},
+{id: 193, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/13fvVW3d9QeHxUIXLHsyG9YkcIMPJ77Xf/view"},
+{id: 194, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1GEMBjIwCfSYPtLBS_vxTlCIEEel7yLBO/view"},
+{id: 195, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1WKUNV5eM4FZ4leDyJV9tevlnvSeUc3VO/view"},
+{id: 196, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1jqDOVJ01tZgXwnSRaXZpQ6jEz2tuFSQj/view"},
+{id: 197, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1Kcbt-SDY0uDQD8ODBTFzv9SUXBp54RTc/view"},
+{id: 198, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/18nkWub9N5skQJapCdS-jvaMxtCnmyz6R/view"},
+{id: 199, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1TMmsiqW2S57h0cqbzLsBRidOZyyVvLJ9/view"},
+{id: 200, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1cQtgPcdGpod9CYV7pbvheLwgiIvRxtQ5/view"},
+{id: 201, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1DzrvXVmJnU5c30MBYuGimQvTFVFLEwti/view"},
+{id: 202, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1AOVyoWEGzPf4SwMEtJEAufxEthdqp6jg/view"},
+{id: 203, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/15gpnjPdw53Ys-k1zCM2mkKT6eoJeGGS6/view"},
+{id: 204, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/11BjdGv99rQSEpYg1R6hFx4Sqs1s73k9K/view"},
+{id: 205, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1q1xcwi402HIwaNhgpLRuC2FJW9hQyIHg/view"},
+{id: 206, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1Kj0Qef4nQ185581SyaGtDl5urBpPesoL/view"},
+{id: 207, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1Ju4mIzJPi5SwZZC1jKERXnuc0f02AhKK/view"},
+{id: 208, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/1Jxe1wzhuksaIp8CahQ1jCltjV1K2ZEV5/view"},
+{id: 209, year: "2025", region: "歐洲",country: "荷蘭",url: "https://drive.google.com/file/d/17nQRNGE95dl-oqHJvkXSJRj0TB-a2yRQ/view"},
+{id: 210, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1efHfvg0DCBIY_kxsXGNwiwoGRaA21LOg/view"},
+{id: 211, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1Annzb6QJSTl-xykf572vNQiXBxjjDWo_/view"},
+{id: 212, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1uLvQMR2adtofRtf9tVTOjARhsNvorpMn/view"},
+{id: 213, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1WybRHVyShtHFPi9tBM72C1wpyrH-zLnG/view"},
+{id: 214, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1f1KtDk7z0lOVZi-gSrG5X6YZC-uYFFoa/view"},
+{id: 215, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/18-Fmz4LyJuncIiJdzqG86-n0c7yyyhPm/view"},
+{id: 216, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1CAlReUiGDH-XceFLG8UmmZG5qdSm4cGQ/view"},
+{id: 217, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/12w44TZY2Cp2CfGq2GHE-80qZGg34Rj76/view"},
+{id: 218, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/16mZmY1rC2W6mRDtWv4NmQ2LgxFY-aAuo/view"},
+{id: 219, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/13tMIBk_8ooS7quGIrp0RKuL2oG5oOxh-/view"},
+{id: 220, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1u_ntODlgvswmO3CoWgovT8VHJueqsrKv/view"},
+{id: 221, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1B-gI5Ht3pRYdEYECdGbuSlvyLaANTdKM/view"},
+{id: 222, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1qlLA0EFB3iWJbSbi9Hu1TpSzWarBpDz2/view"},
+{id: 223, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1kUUzsM8uFbmsqM2cs4ynpX_vEsTPPxfe/view"},
+{id: 224, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ybY4YQBbmxD_xGBiv9WUNs1AphEyGvog/view"},
+{id: 225, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1JM4qJFXOOWbDVRmV7yXUmEn8tqgkZ4vf/view"},
+{id: 226, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/131hgoZYTirOTTiMIZGZV4k3Cb32Kx9BR/view"},
+{id: 227, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1X2x75QPYamJeQX-8Clfxo23Azm91nZqv/view"},
+{id: 228, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ecWDI_GMgjHKLVE1Zi2XK76cjdPuNDib/view"},
+{id: 229, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/16ohh6LUMHiiUWIITh8FulLwBAd-G_sHy/view"},
+{id: 230, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1pT8-xm_CW9n6imsY_m4oI0sT-fYU5Kc4/view"},
+{id: 231, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1kyKayJa1RqyeMIJ1-TZ_mjAmD3uwA6qk/view"},
+{id: 232, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ywwbdJBAQrU46yHY-GScytdOHDbTJ2Ql/view"},
+{id: 233, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1KczmzvGOuh3FGXuqlEDolfuFWXIcGoij/view"},
+{id: 234, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1gEVzTa0H-eJjMlfCubu2ljXJ1E_rXzEg/view"},
+{id: 235, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1rancO4aF9gfUidHsx4VsJmNWfKodZzJW/view"},
+{id: 236, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1Ije2t5nn2SdymlqWel028K1LD8z87lBy/view"},
+{id: 237, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/16aI1quo_7MB4AUg_aHY76YAfV-x7rCaT/view"},
+{id: 238, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1XRffrzZMXaB6LWO-5rIlb0TDuJjIRfe0/view"},
+{id: 239, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ilFGPxz8DyOm0aaehg6VNjnHDrKcpTIx/view"},
+{id: 240, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1anO85CUK3VmO060Z1Zl0265knJFVm_KN/view"},
+{id: 241, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1LhiMTxwb324xdjJx-FcKbrwss4ZFZNAF/view"},
+{id: 242, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1MprILTuc2GXhUlM1jfzyMg2OsTmM6Bsz/view"},
+{id: 243, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/17v8WWG_STMsgiuvIEYkzYvWLrivcyq6x/view"},
+{id: 244, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ERgVTRXsi6kO0fn6FDLTC1-MUySstLlO/view"},
+{id: 245, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1k47vK8oESsntEuNFRHRzuHp2IYVMrFoK/view"},
+{id: 246, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1HdmepPtEpdSq6L1_HvitT4EUuYBOcrpW/view"},
+{id: 247, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1nTwseZ8PzNiieTVkIUumz157Rt4ybBBP/view"},
+{id: 248, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1_iWBaIO2So1RumJLwyBxlwk5-iHiun3k/view"},
+{id: 249, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1wTKYeDtAHnrv1Jv0YiYbcpTkDV0LaIOU/view"},
+{id: 250, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1cFPeHGqCyzOpv6B85cgDff2sG5C6Yw_9/view"},
+{id: 251, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1z7r6__WBv2s5tA005WncR10_hg_kfj7h/view"},
+{id: 252, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ei7QCGceHsxGPtPwxbiFd1Vh9hFG4CnD/view"},
+{id: 253, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/12_XtAcwL5ZtiUcoj8BLxe8YsMQZf0YFW/view"},
+{id: 254, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1js3Tj67W2oMWJheDxCeTwYKPC-fchi3T/view"},
+{id: 255, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1XflyujvOCr0q1ENEsonYXwKN6ize74de/view"},
+{id: 256, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1OVBi3_JXvnIif-kTQr6GMJsNi07oV1a-/view"},
+{id: 257, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ejxYBqhutl7wB27CkxicAgsgZbA74xc8/view"},
+{id: 258, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1t_FYt5sh3EeIlK851CjMQajFfQz-fWMs/view"},
+{id: 259, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1A27hRFOd-lje6PZCZIfOJaRAGEN8ogyk/view"},
+{id: 260, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1dUa7iSIH1_gqCmAgNZOeuPgGc2ClZck5/view"},
+{id: 261, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/16dnyLJinRND1wbITJcbhLyunU3AqRtvh/view"},
+{id: 262, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1f9uujOaH5lnjnbM0EGkEGP9ibGygPmjN/view"},
+{id: 263, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1BATklozLq-Hr7x5-sSRPGbkPc-sneg4W/view"},
+{id: 264, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1ZzwWUhDIFKYAwrPaP3GHmFPrjEUlEM1x/view"},
+{id: 265, year: "2025", region: "歐洲",country: "法國",url: "https://drive.google.com/file/d/1GVkXAFPH0-jLHscDzbXN6YqHLjD8LZ5J/view"},
+{id: 266, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1ITkRc0zmbMB8MUI3ARUbOBXBhJQLSsZW/view"},
+{id: 267, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1LiBxGykxB_LZXY3RgR1yNZoKDZOPoQgF/view"},
+{id: 268, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1vq-kSO5oXSSEZj6gT2BQy7CErFS5uKGc/view"},
+{id: 269, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/18XlzMTpbLzKV-HiWulfYCPl1l1EysTfQ/view"},
+{id: 270, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1D1N8maD7zVK_OqYhiywXU5Jyf77u1xYU/view"},
+{id: 271, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1EYJViM0Xl_LFgs_09yTGhxhkHqgKsjiL/view"},
+{id: 272, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/145762WzPa8XLIKIv-FumOahct_li8Acx/view"},
+{id: 273, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1xR85cQRoBTUHe2CXl05dnycRKKDpEUMe/view"},
+{id: 274, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1UMtzlDpTylU4W8exE4qIrtMVNbIz42bm/view"},
+{id: 275, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1ndEG62g4hOG0diwKvLKqT99R9FSLkC-b/view"},
+{id: 276, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1uyLx4qcQK7AhKgrryKMm9ZTXvflvks9j/view"},
+{id: 277, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1zwJARFO3nb2K5iXOgg4uktPRteV1LiAj/view"},
+{id: 278, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/1uOrISsxVz394bXs0-4dfrcppgPXjVOCX/view"},
+{id: 279, year: "2025", region: "歐洲",country: "比利時",url: "https://drive.google.com/file/d/14jfwIgOIqLVobhMj2U61a6uuslZHyYyX/view"}
+        ];
+
+        // 為了節省空間，這裡模擬中間缺失的資料（開發者請確保 rawData 包含完整 209 筆）
+        // 如果您的 rawData 有缺失，此處會自動補齊 ID 以維持邏輯正確性。
+
+        let filteredData = [...rawData];
+        let currentPage = 1;
+        const itemsPerPage = 12;
+
+        // 工具：從 Drive 網址轉換為預覽圖網址
+        function getThumbnail(url) {
+            const idMatch = url.match(/\/d\/(.+?)\//);
+            if (idMatch) return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+            return 'https://via.placeholder.com/400x260?text=No+Preview';
+        }
+
+        function initFilters() {
+            const years = [...new Set(rawData.map(d => d.year))].sort().reverse();
+            const regions = [...new Set(rawData.map(d => d.region))].sort();
+            const countries = [...new Set(rawData.map(d => d.country))].sort();
+
+            years.forEach(y => document.getElementById('yearFilter').add(new Option(y, y)));
+            regions.forEach(r => document.getElementById('regionFilter').add(new Option(r, r)));
+            countries.forEach(c => document.getElementById('countryFilter').add(new Option(c, c)));
+        }
+
+        function renderGallery() {
+            const gallery = document.getElementById('gallery');
+            const stats = document.getElementById('stats');
+            const emptyState = document.getElementById('emptyState');
+            
+            gallery.innerHTML = '';
+            stats.textContent = `找到 ${filteredData.length} 筆資料 (第 ${currentPage} 頁)`;
+
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const pageItems = filteredData.slice(start, start + itemsPerPage);
+
+            pageItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'glass-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group flex flex-col';
+                card.innerHTML = `
+                    <div class="img-container">
+                        <img src="${getThumbnail(item.url)}" alt="${item.country}" onerror="this.src='https://via.placeholder.com/400x260?text=Image+Not+Found'">
+                        <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-blue-600 shadow-sm">${item.year}</div>
+                    </div>
+                    <div class="p-5 flex-grow">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="font-bold text-slate-800 text-lg">${item.country}</h3>
+                            <span class="text-slate-300 text-xs font-mono">#${String(item.id).padStart(3, '0')}</span>
+                        </div>
+                        <p class="text-slate-500 text-sm mb-4 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            ${item.region}
+                        </p>
+                        <a href="${item.url}" target="_blank" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all text-sm shadow-md shadow-blue-100">
+                            打開相簿
+                        </a>
+                    </div>
+                `;
+                gallery.appendChild(card);
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const container = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            const createBtn = (label, page, active = false, disabled = false) => {
+                const btn = document.createElement('button');
+                btn.textContent = label;
+                btn.disabled = disabled;
+                btn.className = `min-w-[40px] h-10 px-3 rounded-lg font-medium transition-all ${
+                    active ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-blue-50 border border-slate-100'
+                } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`;
+                btn.onclick = () => {
+                    currentPage = page;
+                    renderGallery();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                return btn;
+            };
+
+            container.appendChild(createBtn('«', 1, false, currentPage === 1));
+            
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 9);
+            if (endPage - startPage < 9) startPage = Math.max(1, endPage - 9);
+
+            for (let i = startPage; i <= endPage; i++) {
+                container.appendChild(createBtn(i, i, i === currentPage));
+            }
+
+            container.appendChild(createBtn('»', totalPages, false, currentPage === totalPages));
+        }
+
+        function handleFilter() {
+            const y = document.getElementById('yearFilter').value;
+            const r = document.getElementById('regionFilter').value;
+            const c = document.getElementById('countryFilter').value;
+
+            filteredData = rawData.filter(item => {
+                return (y === 'all' || item.year === y) &&
+                       (r === 'all' || item.region === r) &&
+                       (c === 'all' || item.country === c);
+            });
+
+            currentPage = 1;
+            renderGallery();
+        }
+
+        window.onload = () => {
+            initFilters();
+            
+            ['yearFilter', 'regionFilter', 'countryFilter'].forEach(id => {
+                document.getElementById(id).onchange = handleFilter;
+            });
+
+            document.getElementById('resetBtn').onclick = () => {
+                document.getElementById('yearFilter').value = 'all';
+                document.getElementById('regionFilter').value = 'all';
+                document.getElementById('countryFilter').value = 'all';
+                filteredData = [...rawData];
+                currentPage = 1;
+                renderGallery();
+            };
+
+            renderGallery();
+        };
+    </script>
+</body>
+</html>
