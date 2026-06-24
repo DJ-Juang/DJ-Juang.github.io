@@ -33,7 +33,7 @@
     data.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `<a href="${item.url}" target="_blank">${item.title}</a>`;
+        card.innerHTML = `<a href="${item.url}" target="_self">${item.title}</a>`;
         container.appendChild(card);
     });
 </script>
