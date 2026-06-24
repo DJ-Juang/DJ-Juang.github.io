@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>我的作品集</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 50px; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { color: #333; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s; text-align: center; }
+        .card:hover { transform: translateY(-5px); }
+        .card a { text-decoration: none; color: #007bff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>歡迎來到我的創作空間</h1>
+    <div class="grid" id="portfolio"></div>
+</div>
+
+<script>
+    const data = [
+        {"title": "我的相片館", "url": "https://dj-juang.github.io/photo/"},
+        {"title": "JDJ-魔術教學", "url": "https://dj-juang.github.io/jdj_magic.html"},
+        {"title": "DJ視頻創作", "url": "https://dj-juang.github.io/%E5%88%86%E9%A0%81-AI%E8%A6%96%E9%A0%BB.html"},
+        {"title": "笑話集", "url": "https://dj-juang.github.io/jokes/"},
+        {"title": "義瑞十日遊", "url": "https://dj-juang.github.io/20260625/"}
+    ];
+
+    const container = document.getElementById('portfolio');
+    data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `<a href="${item.url}" target="_blank">${item.title}</a>`;
+        container.appendChild(card);
+    });
+</script>
+
+</body>
+</html>
